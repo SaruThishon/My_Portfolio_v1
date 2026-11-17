@@ -3,7 +3,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 
 const API = 'http://localhost:8000';
 const session = Astro.cookies.get('session_token');
-const headers = { Cookie: `session_token=${session?.value}`, 'Content-Type': 'application/json' };
+const headers: Record<string, string> = { Cookie: `session_token=${session?.value ?? ''}`, 'Content-Type': 'application/json' };
 
 let projects: any[] = [];
 let error = '';

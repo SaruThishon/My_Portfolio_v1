@@ -1,18 +1,24 @@
 ---
-// Handle POST logout — call API, clear cookie, redirect
+// Handle POST logout — call API, clear cookie, redirect to login
 if (Astro.request.method === 'POST') {
   const sessionToken = Astro.cookies.get('session_token');
-  if (sessionToken) {
+  if (sessionToken?.value) {
     try {
+      // Tell the backend to invalidate this session in the database
       await fetch('http://localhost:8000/api/auth/logout', {
         method: 'POST',
-        headers: { Cookie: `session_token=${sessionToken.value}` },
-        credentials: 'include',
+        headers: {
+          'Cookie': `session_token=${sessionToken.value}`,
+          'Content-Type': 'application/json',
+        },
       });
-    } catch {}
+    } catch {
+      // Even if the API call fails, we still clear the local cookie
+    }
     Astro.cookies.delete('session_token', { path: '/' });
   }
   return Astro.redirect('/admin/login');
 }
-return Astro.redirect('/admin');
+// GET requests just redirect to login
+return Astro.redirect('/admin/login');
 ---

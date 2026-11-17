@@ -3,8 +3,9 @@ import '../styles/admin.css';
 interface Props { title?: string; activePage?: string; unreadEnquiries?: number; }
 const { title='Admin', activePage='', unreadEnquiries=0 } = Astro.props;
 const sessionToken = Astro.cookies.get('session_token');
-const isLoginPage = Astro.url.pathname === '/admin/login';
-if (!sessionToken && !isLoginPage) return Astro.redirect('/admin/login');
+const currentPath = Astro.url.pathname;
+const isPublicAdminPage = currentPath === '/admin/login' || currentPath === '/admin/logout';
+if (!sessionToken?.value && !isPublicAdminPage) return Astro.redirect('/admin/login');
 const nav = [
   {href:'/admin', page:'dashboard', label:'Dashboard', icon:'M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z'},
   {href:'/admin/enquiries', page:'enquiries', label:'Enquiries', icon:'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'},

@@ -84,7 +84,7 @@ async def login(
         path="/",
     )
 
-    return {"message": "Login successful", "user": AdminUserOut.model_validate(user)}
+    return {"message": "Login successful", "token": token, "user": AdminUserOut.model_validate(user)}
 
 
 @router.post("/logout")
