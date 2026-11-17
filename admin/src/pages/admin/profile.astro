@@ -1,0 +1,55 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+const API = 'http://localhost:8000';
+const session = Astro.cookies.get('session_token');
+const h = { Cookie: `session_token=${session?.value}`, 'Content-Type': 'application/json' };
+let profile: any = null;
+let error = '';
+let success = '';
+try { const r = await fetch(`${API}/api/profile`, { headers: h }); if (r.ok) profile = await r.json(); } catch { error='Connection error'; }
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const payload: any = {};
+  ['full_name','professional_title','hero_headline','hero_description','about_bio','location','availability_text','email','github_url','linkedin_url','twitter_url','website_url','profile_image_url'].forEach(k => { const v = form.get(k) as string; if (v !== null) payload[k] = v || null; });
+  payload.is_available = form.get('is_available') === 'on';
+  try {
+    const r = await fetch(`${API}/api/profile`, { method:'PUT', headers:h, body:JSON.stringify(payload) });
+    const d = await r.json();
+    if (r.ok) { profile=d; success='Profile saved!'; } else error=d.detail||'Failed';
+  } catch { error='Connection error'; }
+}
+---
+<AdminLayout title="Profile" activePage="profile">
+  <div class="admin-topbar"><div class="admin-topbar-title">Profile</div></div>
+  <div class="admin-content">
+    {error && <div class="alert alert--error">{error}</div>}
+    {success && <div class="alert alert--success">{success}</div>}
+    {profile && (
+    <form method="POST" style="max-width:720px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+        <div class="form-group"><label class="form-label">Full Name</label><input name="full_name" class="form-input" value={profile.full_name}/></div>
+        <div class="form-group"><label class="form-label">Professional Title</label><input name="professional_title" class="form-input" value={profile.professional_title}/></div>
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Hero Headline</label><textarea name="hero_headline" class="form-input form-textarea" rows="2">{profile.hero_headline}</textarea></div>
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Hero Description</label><textarea name="hero_description" class="form-input form-textarea" rows="2">{profile.hero_description}</textarea></div>
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">About Bio</label><textarea name="about_bio" class="form-input form-textarea" rows="5">{profile.about_bio}</textarea></div>
+        <div class="form-group"><label class="form-label">Location</label><input name="location" class="form-input" value={profile.location??''}/></div>
+        <div class="form-group"><label class="form-label">Availability Text</label><input name="availability_text" class="form-input" value={profile.availability_text}/></div>
+        <div class="form-group"><label class="form-label">Email</label><input name="email" class="form-input" type="email" value={profile.email??''}/></div>
+        <div class="form-group"><label class="form-label">GitHub URL</label><input name="github_url" class="form-input" value={profile.github_url??''}/></div>
+        <div class="form-group"><label class="form-label">LinkedIn URL</label><input name="linkedin_url" class="form-input" value={profile.linkedin_url??''}/></div>
+        <div class="form-group"><label class="form-label">Twitter URL</label><input name="twitter_url" class="form-input" value={profile.twitter_url??''}/></div>
+        <div class="form-group"><label class="form-label">Website URL</label><input name="website_url" class="form-input" value={profile.website_url??''}/></div>
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Profile Image URL</label><input name="profile_image_url" class="form-input" value={profile.profile_image_url??''} placeholder="https://... or upload via Media"/></div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+            <input type="checkbox" name="is_available" checked={profile.is_available} style="accent-color:#B794F6;width:16px;height:16px"/>
+            <span class="form-label" style="margin:0">Available for opportunities</span>
+          </label>
+        </div>
+      </div>
+      <button type="submit" class="btn btn--primary">Save Profile</button>
+    </form>
+    )}
+  </div>
+</AdminLayout>

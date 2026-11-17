@@ -1,0 +1,52 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+const API='http://localhost:8000';
+const session=Astro.cookies.get('session_token');
+const h={Cookie:`session_token=${session?.value}`,'Content-Type':'application/json'};
+let items:any[]=[]; let error=''; let success='';
+try{const r=await fetch(`${API}/api/certifications`,{headers:h});if(r.ok)items=await r.json();}catch{error='Connection error';}
+if(Astro.request.method==='POST'){
+  const form=await Astro.request.formData();
+  const action=form.get('_action') as string;
+  if(action==='create'){
+    const payload={name:form.get('name'),issuer:form.get('issuer'),issue_date:form.get('issue_date')||null,credential_id:form.get('credential_id')||null,credential_url:form.get('credential_url')||null,description:form.get('description')||null,display_order:parseInt(form.get('display_order') as string)||0};
+    try{const r=await fetch(`${API}/api/certifications`,{method:'POST',headers:h,body:JSON.stringify(payload)});if(r.ok){items=[...items,await r.json()];success='Added!';}else{const d=await r.json();error=d.detail||'Failed';}}catch{error='Connection error';}
+  }else if(action==='delete'){const id=form.get('id');try{await fetch(`${API}/api/certifications/${id}`,{method:'DELETE',headers:h});items=items.filter((c:any)=>c.id!==id);success='Deleted!';}catch{error='Connection error';}}
+}
+---
+<AdminLayout title="Certifications" activePage="certifications">
+  <div class="admin-topbar"><div class="admin-topbar-title">Certifications</div></div>
+  <div class="admin-content">
+    {error&&<div class="alert alert--error">{error}</div>}
+    {success&&<div class="alert alert--success">{success}</div>}
+    <div style="display:grid;grid-template-columns:340px 1fr;gap:2rem;align-items:start">
+      <div style="background:#19161F;border:1px solid #35303D;border-radius:12px;padding:1.5rem">
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:1.25rem">Add Certification</h3>
+        <form method="POST">
+          <input type="hidden" name="_action" value="create"/>
+          <div class="form-group"><label class="form-label">Name *</label><input name="name" class="form-input" required placeholder="AWS Cloud Practitioner"/></div>
+          <div class="form-group"><label class="form-label">Issuer *</label><input name="issuer" class="form-input" required placeholder="Amazon Web Services"/></div>
+          <div class="form-group"><label class="form-label">Issue Date</label><input name="issue_date" class="form-input" type="date"/></div>
+          <div class="form-group"><label class="form-label">Credential ID</label><input name="credential_id" class="form-input" placeholder="ABC123"/></div>
+          <div class="form-group"><label class="form-label">Credential URL</label><input name="credential_url" class="form-input" placeholder="https://..."/></div>
+          <div class="form-group"><label class="form-label">Description</label><textarea name="description" class="form-input form-textarea" rows="2"></textarea></div>
+          <div class="form-group"><label class="form-label">Display Order</label><input name="display_order" class="form-input" type="number" value="0"/></div>
+          <button type="submit" class="btn btn--primary" style="width:100%;justify-content:center">Add</button>
+        </form>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        {items.length===0?<div class="empty-state"><p>No certifications yet.</p></div>:items.map((cert:any)=>(
+          <div style="background:#19161F;border:1px solid #35303D;border-radius:12px;padding:1.25rem;display:flex;justify-content:space-between;align-items:start;gap:1rem">
+            <div>
+              <div style="color:#F5F0FA;font-weight:600">{cert.name}</div>
+              <div style="color:#B794F6;font-size:14px">{cert.issuer}</div>
+              {cert.issue_date&&<div style="font-size:12px;color:#6B6475">{new Date(cert.issue_date).toLocaleDateString('en-US',{year:'numeric',month:'short'})}</div>}
+              {cert.credential_url&&<a href={cert.credential_url} target="_blank" style="font-size:12px;color:#B794F6">View credential ↗</a>}
+            </div>
+            <form method="POST" style="flex-shrink:0"><input type="hidden" name="_action" value="delete"/><input type="hidden" name="id" value={cert.id}/><button type="submit" class="btn btn--danger btn--sm" onclick="return confirm('Delete?')">Delete</button></form>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</AdminLayout>

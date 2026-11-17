@@ -1,0 +1,83 @@
+---
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+const { id } = Astro.params;
+const API = 'http://localhost:8000';
+const session = Astro.cookies.get('session_token');
+const h = { Cookie: `session_token=${session?.value}`, 'Content-Type': 'application/json' };
+let project: any = null;
+let error = '';
+let success = Astro.url.searchParams.get('created') === '1' ? 'Project created!' : '';
+try {
+  const r = await fetch(`${API}/api/projects/${id}`, { headers: h });
+  if (r.ok) project = await r.json(); else error = 'Not found';
+} catch { error = 'Connection error'; }
+
+if (Astro.request.method === 'POST' && project) {
+  const form = await Astro.request.formData();
+  const action = form.get('_action') as string;
+  if (action === 'update') {
+    const payload = {
+      title: form.get('title'), slug: form.get('slug'),
+      short_description: form.get('short_description'), description: form.get('description'),
+      problem_statement: form.get('problem_statement'), solution: form.get('solution'),
+      category: form.get('category'), thumbnail_url: form.get('thumbnail_url')||null,
+      github_url: form.get('github_url')||null, demo_url: form.get('demo_url')||null,
+      technologies: (form.get('technologies') as string||'').split(',').map((t:string)=>t.trim()).filter(Boolean),
+      is_featured: form.get('is_featured')==='on',
+      display_order: parseInt(form.get('display_order') as string)||0,
+    };
+    try {
+      const r = await fetch(`${API}/api/projects/${id}`, { method:'PUT', headers:h, body:JSON.stringify(payload) });
+      const d = await r.json();
+      if (r.ok) { project=d; success='Saved!'; } else error = d.detail||'Failed';
+    } catch { error='Connection error'; }
+  } else if (action==='publish'||action==='draft') {
+    try {
+      const r = await fetch(`${API}/api/projects/${id}/status`, { method:'PATCH', headers:h, body:JSON.stringify({status:action==='publish'?'published':'draft'}) });
+      if (r.ok) { project=await r.json(); success=`Status updated!`; } else error='Failed';
+    } catch { error='Connection error'; }
+  }
+}
+---
+<AdminLayout title={project?.title??'Edit'} activePage="projects">
+  <div class="admin-topbar">
+    <div class="admin-topbar-title">{project?.title??'Edit Project'}</div>
+    <div class="admin-topbar-actions">
+      <a href="/admin/projects" class="btn btn--ghost">← Projects</a>
+      {project && (<form method="POST" style="display:inline"><input type="hidden" name="_action" value={project.status==='published'?'draft':'publish'}/><button type="submit" class={`btn ${project.status==='published'?'btn--ghost':'btn--primary'}`}>{project.status==='published'?'Unpublish':'Publish'}</button></form>)}
+    </div>
+  </div>
+  <div class="admin-content">
+    {error && <div class="alert alert--error">{error}</div>}
+    {success && <div class="alert alert--success">{success}</div>}
+    {project && (
+    <form method="POST" style="max-width:720px">
+      <input type="hidden" name="_action" value="update"/>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Title *</label><input name="title" class="form-input" required value={project.title}/></div>
+        <div class="form-group"><label class="form-label">Slug</label><input name="slug" class="form-input" value={project.slug}/></div>
+        <div class="form-group"><label class="form-label">Category</label><input name="category" class="form-input" value={project.category}/></div>
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Short Description</label><input name="short_description" class="form-input" value={project.short_description}/></div>
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Full Description</label><textarea name="description" class="form-input form-textarea" rows="4">{project.description}</textarea></div>
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Problem Statement</label><textarea name="problem_statement" class="form-input form-textarea" rows="3">{project.problem_statement}</textarea></div>
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Solution</label><textarea name="solution" class="form-input form-textarea" rows="3">{project.solution}</textarea></div>
+        <div class="form-group"><label class="form-label">GitHub URL</label><input name="github_url" class="form-input" value={project.github_url??''}/></div>
+        <div class="form-group"><label class="form-label">Demo URL</label><input name="demo_url" class="form-input" value={project.demo_url??''}/></div>
+        <div class="form-group"><label class="form-label">Thumbnail URL</label><input name="thumbnail_url" class="form-input" value={project.thumbnail_url??''}/></div>
+        <div class="form-group"><label class="form-label">Display Order</label><input name="display_order" class="form-input" type="number" value={project.display_order}/></div>
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Technologies (comma-separated)</label><input name="technologies" class="form-input" value={project.technologies.join(', ')}/></div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+            <input type="checkbox" name="is_featured" checked={project.is_featured} style="accent-color:#B794F6;width:16px;height:16px"/>
+            <span class="form-label" style="margin:0">Featured project</span>
+          </label>
+        </div>
+      </div>
+      <div style="display:flex;gap:1rem;margin-top:1rem">
+        <button type="submit" class="btn btn--primary">Save Changes</button>
+        <a href="/admin/projects" class="btn btn--ghost">Cancel</a>
+      </div>
+    </form>
+    )}
+  </div>
+</AdminLayout>

@@ -1,0 +1,104 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+
+let error = '';
+let success = '';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const session = Astro.cookies.get('session_token');
+  const payload = {
+    title: form.get('title'), slug: form.get('slug') || undefined,
+    short_description: form.get('short_description'),
+    description: form.get('description'), problem_statement: form.get('problem_statement'),
+    solution: form.get('solution'), category: form.get('category'),
+    github_url: form.get('github_url') || null, demo_url: form.get('demo_url') || null,
+    technologies: (form.get('technologies') as string || '').split(',').map((t:string) => t.trim()).filter(Boolean),
+    is_featured: form.get('is_featured') === 'on',
+    seo_title: form.get('seo_title') || null, seo_description: form.get('seo_description') || null,
+  };
+  try {
+    const res = await fetch('http://localhost:8000/api/projects', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json', Cookie: `session_token=${session?.value}` },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (res.ok) return Astro.redirect(`/admin/projects/${data.id}/edit?created=1`);
+    else error = data.detail || 'Failed to create project';
+  } catch { error = 'Connection error'; }
+}
+---
+<AdminLayout title="New Project" activePage="projects">
+  <div class="admin-topbar">
+    <div class="admin-topbar-title">New Project</div>
+    <div class="admin-topbar-actions">
+      <a href="/admin/projects" class="btn btn--ghost">← Back</a>
+    </div>
+  </div>
+  <div class="admin-content">
+    {error && <div class="alert alert--error">{error}</div>}
+    <form method="POST" style="max-width:720px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Title *</label>
+          <input name="title" class="form-input" placeholder="Project title" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Slug (auto-generated if empty)</label>
+          <input name="slug" class="form-input" placeholder="my-project-name" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <input name="category" class="form-input" placeholder="Data Analysis" value="Project" />
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Short Description *</label>
+          <input name="short_description" class="form-input" placeholder="One-line description (max 300 chars)" required maxlength="300" />
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Full Description</label>
+          <textarea name="description" class="form-input form-textarea" rows="5" placeholder="Detailed description of the project..."></textarea>
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Problem Statement</label>
+          <textarea name="problem_statement" class="form-input form-textarea" rows="3" placeholder="What problem does this solve?"></textarea>
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Solution</label>
+          <textarea name="solution" class="form-input form-textarea" rows="3" placeholder="How did you solve it?"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">GitHub URL</label>
+          <input name="github_url" class="form-input" type="url" placeholder="https://github.com/..." />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Demo URL</label>
+          <input name="demo_url" class="form-input" type="url" placeholder="https://demo.example.com" />
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Technologies (comma-separated)</label>
+          <input name="technologies" class="form-input" placeholder="Python, PostgreSQL, FastAPI" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">SEO Title</label>
+          <input name="seo_title" class="form-input" placeholder="Custom SEO title" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">SEO Description</label>
+          <input name="seo_description" class="form-input" placeholder="Custom meta description" />
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+            <input type="checkbox" name="is_featured" style="width:16px;height:16px;accent-color:#B794F6" />
+            <span class="form-label" style="margin:0">Mark as featured</span>
+          </label>
+        </div>
+      </div>
+      <div style="display:flex;gap:1rem;margin-top:1rem">
+        <button type="submit" class="btn btn--primary">Create Project</button>
+        <a href="/admin/projects" class="btn btn--ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</AdminLayout>

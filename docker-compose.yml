@@ -1,0 +1,74 @@
+services:
+  # ─── Main PostgreSQL Database ───────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: portfolio_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: portfolio_user
+      POSTGRES_PASSWORD: portfolio_pass
+      POSTGRES_DB: portfolio_db
+      POSTGRES_INITDB_ARGS: "--auth-host=md5 --auth-local=md5"
+    command: >
+      postgres
+      -c password_encryption=md5
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portfolio_user -d portfolio_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── NOTE: For local dev, file storage uses local filesystem (see STORAGE_PROVIDER=local in .env)
+  # For production, configure Cloudflare R2 (S3-compatible) credentials in .env
+
+  # ─── Mailpit (SMTP trap — captures all outgoing emails locally) ─────────────
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: portfolio_mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
+  # ─── Umami Analytics Database ───────────────────────────────────────────────
+  umami_db:
+    image: postgres:16-alpine
+    container_name: portfolio_umami_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: umami_user
+      POSTGRES_PASSWORD: umami_pass
+      POSTGRES_DB: umami_db
+    volumes:
+      - umami_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami_user -d umami_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Umami Analytics ────────────────────────────────────────────────────────
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    container_name: portfolio_umami
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      DATABASE_URL: postgresql://umami_user:umami_pass@umami_db:5432/umami_db
+      DATABASE_TYPE: postgresql
+      APP_SECRET: umami_app_secret_changeme
+    depends_on:
+      umami_db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  umami_db_data:

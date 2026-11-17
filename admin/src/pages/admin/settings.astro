@@ -1,0 +1,58 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+const API='http://localhost:8000';
+const session=Astro.cookies.get('session_token');
+const h={Cookie:`session_token=${session?.value}`,'Content-Type':'application/json'};
+let settings:any={}; let error=''; let success='';
+try{const r=await fetch(`${API}/api/settings`,{headers:h});if(r.ok){const list=await r.json();list.forEach((s:any)=>{settings[s.key]=s.value;});}}catch{error='Connection error';}
+
+if(Astro.request.method==='POST'){
+  const form=await Astro.request.formData();
+  const updates=[['site_title',form.get('site_title')],['meta_description',form.get('meta_description')],['footer_text',form.get('footer_text')],['hero_badge_text',form.get('hero_badge_text')]];
+  let failed=false;
+  for(const [key,value] of updates){
+    try{const r=await fetch(`${API}/api/settings/${key}`,{method:'PUT',headers:h,body:JSON.stringify({value})});if(!r.ok)failed=true;}catch{failed=true;}
+  }
+  if(!failed)success='Settings saved!'; else error='Some settings failed to save';
+}
+---
+<AdminLayout title="Settings" activePage="settings">
+  <div class="admin-topbar"><div class="admin-topbar-title">Site Settings</div></div>
+  <div class="admin-content">
+    {error&&<div class="alert alert--error">{error}</div>}
+    {success&&<div class="alert alert--success">{success}</div>}
+    <form method="POST" style="max-width:600px">
+      <div style="background:#19161F;border:1px solid #35303D;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem">
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:1.25rem">General</h3>
+        <div class="form-group"><label class="form-label">Site Title</label><input name="site_title" class="form-input" value={settings.site_title||''} placeholder="Portfolio"/></div>
+        <div class="form-group"><label class="form-label">Meta Description</label><textarea name="meta_description" class="form-input form-textarea" rows="2">{settings.meta_description||''}</textarea></div>
+        <div class="form-group"><label class="form-label">Footer Text</label><input name="footer_text" class="form-input" value={settings.footer_text||''} placeholder="Built with curiosity and caffeine."/></div>
+        <div class="form-group"><label class="form-label">Hero Badge Text</label><input name="hero_badge_text" class="form-input" value={settings.hero_badge_text||''} placeholder="Open to Opportunities"/></div>
+      </div>
+      <button type="submit" class="btn btn--primary">Save Settings</button>
+    </form>
+
+    <div style="margin-top:2rem;background:#19161F;border:1px solid #35303D;border-radius:12px;padding:1.5rem;max-width:600px">
+      <h3 style="font-size:16px;font-weight:600;margin-bottom:1rem">Publish Site</h3>
+      <p style="font-size:13px;color:#A9A1B1;margin-bottom:1rem">Trigger a rebuild of the public portfolio to push all published content live.</p>
+      <button type="button" id="publish-btn" class="btn btn--primary">Trigger Build</button>
+      <div id="publish-status" style="margin-top:.75rem;font-size:13px"></div>
+    </div>
+  </div>
+</AdminLayout>
+<script>
+document.getElementById('publish-btn')?.addEventListener('click', async () => {
+  const btn = document.getElementById('publish-btn') as HTMLButtonElement;
+  const status = document.getElementById('publish-status')!;
+  btn.disabled = true; btn.textContent = 'Triggering…';
+  try {
+    const r = await fetch('http://localhost:8000/api/admin/trigger-build', {
+      method: 'POST', headers: { 'x-build-secret': 'dev_build_hook_secret' },
+    });
+    const d = await r.json();
+    status.textContent = d.message || (d.triggered ? '✓ Build triggered!' : '✗ Failed');
+    status.style.color = d.triggered ? '#4ADE80' : '#F87171';
+  } catch { status.textContent = 'Network error'; status.style.color = '#F87171'; }
+  finally { btn.disabled = false; btn.textContent = 'Trigger Build'; }
+});
+</script>

@@ -1,0 +1,86 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+const API = 'http://localhost:8000';
+const session = Astro.cookies.get('session_token');
+const h = { Cookie: `session_token=${session?.value}`, 'Content-Type': 'application/json' };
+
+const statusFilter = Astro.url.searchParams.get('status') || '';
+const url = statusFilter ? `${API}/api/enquiries?status=${statusFilter}&limit=50` : `${API}/api/enquiries?limit=50`;
+let enquiries: any[] = [];
+let stats: any = { unread: 0, total: 0 };
+let error = '';
+try {
+  const [enqRes, statsRes] = await Promise.all([
+    fetch(url, { headers: h }),
+    fetch(`${API}/api/enquiries/stats`, { headers: h }),
+  ]);
+  if (enqRes.ok) enquiries = await enqRes.json();
+  if (statsRes.ok) stats = await statsRes.json();
+  else error = 'Failed to load';
+} catch { error = 'Connection error'; }
+
+function statusClass(s: string) {
+  return s==='new'?'badge--violet':s==='replied'?'badge--green':s==='archived'?'badge--gray':'badge--yellow';
+}
+function typeLabel(t: string) {
+  return t.replace(/_/g,' ').replace(/\b\w/g,(l:string)=>l.toUpperCase());
+}
+---
+<AdminLayout title="Enquiries" activePage="enquiries" unreadEnquiries={stats.unread}>
+  <div class="admin-topbar">
+    <div class="admin-topbar-title">Enquiries</div>
+    <div class="admin-topbar-actions">
+      <span style="font-size:13px;color:#A9A1B1">{stats.unread} unread · {stats.total} total</span>
+    </div>
+  </div>
+  <div class="admin-content">
+    {error && <div class="alert alert--error">{error}</div>}
+    <!-- Filters -->
+    <div style="display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap">
+      {['', 'new', 'read', 'replied', 'archived'].map(s => (
+        <a href={`/admin/enquiries${s?'?status='+s:''}`} class={`btn btn--sm ${statusFilter===s?'btn--primary':'btn--ghost'}`}>
+          {s || 'All'}
+        </a>
+      ))}
+    </div>
+    {enquiries.length === 0 ? (
+      <div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><h3>No enquiries</h3><p>Contact form submissions will appear here.</p></div>
+    ) : (
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Name</th><th>Subject</th><th>Type</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody>
+            {enquiries.map((e: any) => (
+              <tr>
+                <td>
+                  <div style="color:#F5F0FA;font-weight:500">{e.name}</div>
+                  <div style="font-size:11px;color:#6B6475">{e.email}</div>
+                </td>
+                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{e.subject}</td>
+                <td><span class="badge badge--gray">{typeLabel(e.enquiry_type)}</span></td>
+                <td><span class={`badge ${statusClass(e.status)}`}>{e.status}</span></td>
+                <td style="font-size:12px">{new Date(e.created_at).toLocaleDateString()}</td>
+                <td>
+                  <div style="display:flex;gap:.5rem">
+                    <a href={`/admin/enquiries/${e.id}`} class="btn btn--ghost btn--sm">View</a>
+                    <button class="btn btn--danger btn--sm del-btn" data-id={e.id}>Delete</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+</AdminLayout>
+<script>
+document.querySelectorAll('.del-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    if (!confirm('Delete this enquiry?')) return;
+    const id = (btn as HTMLElement).dataset.id;
+    const r = await fetch(`http://localhost:8000/api/enquiries/${id}`, { method: 'DELETE', credentials: 'include' });
+    if (r.ok) window.location.reload(); else alert('Failed');
+  });
+});
+</script>

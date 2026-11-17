@@ -1,0 +1,58 @@
+---
+---
+<footer class="footer">
+  <div class="container">
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <a href="/" class="footer__logo">◆ DEV</a>
+        <p class="footer__tagline">Built with curiosity and caffeine.</p>
+      </div>
+      <nav class="footer__nav" aria-label="Footer navigation">
+        <ul role="list">
+          <li><a href="/#about">About</a></li>
+          <li><a href="/#projects">Projects</a></li>
+          <li><a href="/#skills">Skills</a></li>
+          <li><a href="/#journey">Journey</a></li>
+          <li><a href="/#contact">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="footer__bottom">
+      <p class="footer__copy">© {new Date().getFullYear()} — All rights reserved.</p>
+      <a href="#top" class="footer__back-top" aria-label="Back to top">
+        Back to top ↑
+      </a>
+    </div>
+  </div>
+</footer>
+
+<style>
+.footer {
+  border-top: 1px solid var(--color-border);
+  padding-block: var(--space-12) var(--space-8);
+  background: var(--color-bg-secondary);
+}
+.footer__inner {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: var(--space-8); flex-wrap: wrap;
+  padding-bottom: var(--space-8); border-bottom: 1px solid var(--color-border);
+}
+.footer__logo {
+  font-family: var(--font-heading); font-weight: 700; font-size: var(--text-xl);
+  color: var(--color-text-primary); letter-spacing: var(--tracking-tight);
+}
+.footer__tagline { margin-top: var(--space-2); font-size: var(--text-sm); color: var(--color-text-muted); }
+.footer__nav ul { display: flex; gap: var(--space-6); flex-wrap: wrap; }
+.footer__nav a { font-size: var(--text-sm); color: var(--color-text-secondary); transition: color var(--transition-fast); }
+.footer__nav a:hover { color: var(--color-accent-primary); }
+.footer__bottom {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: var(--space-6); flex-wrap: wrap; gap: var(--space-4);
+}
+.footer__copy { font-size: var(--text-sm); color: var(--color-text-muted); }
+.footer__back-top {
+  font-size: var(--text-sm); color: var(--color-text-secondary);
+  transition: color var(--transition-fast); font-weight: 500;
+}
+.footer__back-top:hover { color: var(--color-accent-primary); }
+</style>

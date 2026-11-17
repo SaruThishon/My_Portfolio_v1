@@ -1,0 +1,78 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPublishedProjects, getProjectBySlug } from '../../lib/api';
+
+export async function getStaticPaths() {
+  const projects = await getPublishedProjects() || [];
+  return projects.map((p: any) => ({ params: { slug: p.slug } }));
+}
+
+const { slug } = Astro.params;
+const project = await getProjectBySlug(slug as string);
+if (!project) return Astro.redirect('/projects');
+const title = `${project.title} — Portfolio`;
+const description = project.seo_description || project.short_description;
+---
+<BaseLayout title={title} description={description}>
+  <div style="padding-top:80px;min-height:100vh">
+    <div class="container">
+      <div style="padding-top:2rem;margin-bottom:2rem">
+        <a href="/projects" style="font-size:var(--text-sm);color:var(--color-text-secondary);font-weight:500;transition:color 150ms">← All Projects</a>
+      </div>
+      <header style="padding-block:3rem 2rem;border-bottom:1px solid var(--color-border);margin-bottom:2rem">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+          <span style="font-size:.75rem;font-weight:500;color:var(--color-text-muted);letter-spacing:.08em;text-transform:uppercase">{project.category}</span>
+          {project.is_featured && <span class="tag">Featured</span>}
+        </div>
+        <h1 style="font-size:clamp(2.5rem,6vw,4rem);font-weight:700;letter-spacing:-0.03em;line-height:1.1;margin-bottom:1rem">{project.title}</h1>
+        <p style="font-size:var(--text-xl);color:var(--color-text-secondary);line-height:1.6;max-width:720px;margin-bottom:1.5rem">{project.short_description}</p>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:2rem">
+          {project.technologies.map((t: string) => <span class="tag">{t}</span>)}
+        </div>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap">
+          {project.github_url && <a href={project.github_url} target="_blank" rel="noopener noreferrer" class="plink">GitHub ↗</a>}
+          {project.demo_url && <a href={project.demo_url} target="_blank" rel="noopener noreferrer" class="plink plink--a">Live Demo ↗</a>}
+        </div>
+      </header>
+      {project.thumbnail_url && <div style="border-radius:var(--radius-xl);overflow:hidden;margin-bottom:3rem;border:1px solid var(--color-border)"><img src={project.thumbnail_url} alt={project.title} width="1200" height="675" loading="eager" style="width:100%;height:auto;display:block"/></div>}
+      <div style="max-width:800px;margin-inline:auto;padding-block:1rem 4rem;display:flex;flex-direction:column;gap:3rem">
+        {project.description && <section><h2 class="sh2">Overview</h2><p class="sp">{project.description}</p></section>}
+        {project.problem_statement && <section><h2 class="sh2">The Problem</h2><p class="sp">{project.problem_statement}</p></section>}
+        {project.solution && <section><h2 class="sh2">The Solution</h2><p class="sp">{project.solution}</p></section>}
+        {project.architecture_notes && <section><h2 class="sh2">Architecture</h2><p class="sp">{project.architecture_notes}</p></section>}
+        {project.challenges && <section><h2 class="sh2">Challenges</h2><p class="sp">{project.challenges}</p></section>}
+        {project.results && <section style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:2rem"><h2 class="sh2">Results</h2><p class="sp">{project.results}</p></section>}
+        {project.images && project.images.length > 0 && (
+          <section>
+            <h2 class="sh2">Screenshots</h2>
+            <div style="display:flex;flex-direction:column;gap:1.5rem">
+              {project.images.map((img: any) => (
+                <figure>
+                  <img src={img.url} alt={img.alt_text||project.title} loading="lazy" width="800" height="450" style="width:100%;border-radius:var(--radius-lg);border:1px solid var(--color-border)"/>
+                  {img.alt_text && <figcaption style="font-size:var(--text-sm);color:var(--color-text-muted);text-align:center;margin-top:.5rem">{img.alt_text}</figcaption>}
+                </figure>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+      <div style="display:flex;justify-content:space-between;padding-block:2rem 4rem;flex-wrap:wrap;gap:1rem">
+        <a href="/projects" class="btn btn--ghost">← All Projects</a>
+        <a href="/#contact" class="btn btn--primary">Work With Me →</a>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+<style>
+.plink{display:inline-flex;align-items:center;gap:.5rem;padding:.6em 1.2em;border-radius:9999px;font-size:var(--text-sm);font-weight:600;border:1px solid var(--color-border);color:var(--color-text-secondary);transition:all 150ms;text-decoration:none}
+.plink:hover{border-color:var(--color-accent-primary);color:var(--color-accent-primary)}
+.plink--a{background:var(--color-accent-primary);color:var(--color-bg-primary);border-color:var(--color-accent-primary)}
+.plink--a:hover{background:#C4A8FF;color:var(--color-bg-primary)}
+.sh2{font-size:var(--text-2xl);font-weight:700;margin-bottom:.75rem}
+.sp{font-size:var(--text-base);color:var(--color-text-secondary);line-height:1.8;white-space:pre-wrap}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.7em 1.5em;border-radius:9999px;font-size:var(--text-base);font-weight:600;cursor:pointer;transition:all 250ms;border:1px solid transparent;font-family:var(--font-body);text-decoration:none}
+.btn--primary{background:var(--color-accent-primary);color:var(--color-bg-primary)}
+.btn--primary:hover{background:#C4A8FF;transform:translateY(-2px)}
+.btn--ghost{background:transparent;color:var(--color-text-primary);border-color:var(--color-border)}
+.btn--ghost:hover{border-color:var(--color-accent-primary);color:var(--color-accent-primary)}
+</style>

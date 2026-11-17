@@ -1,0 +1,57 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+const API='http://localhost:8000';
+const session=Astro.cookies.get('session_token');
+const h={Cookie:`session_token=${session?.value}`,'Content-Type':'application/json'};
+let items:any[]=[]; let error=''; let success='';
+try{const r=await fetch(`${API}/api/experience`,{headers:h});if(r.ok)items=await r.json();}catch{error='Connection error';}
+if(Astro.request.method==='POST'){
+  const form=await Astro.request.formData();
+  const action=form.get('_action') as string;
+  if(action==='create'){
+    const payload={organization:form.get('organization'),position:form.get('position'),employment_type:form.get('employment_type')||'internship',start_date:form.get('start_date')||null,end_date:form.get('end_date')||null,is_current:form.get('is_current')==='on',description:form.get('description')||null,technologies:(form.get('technologies') as string||'').split(',').map((t:string)=>t.trim()).filter(Boolean),display_order:parseInt(form.get('display_order') as string)||0};
+    try{const r=await fetch(`${API}/api/experience`,{method:'POST',headers:h,body:JSON.stringify(payload)});if(r.ok){items=[...items,await r.json()];success='Added!';}else{const d=await r.json();error=d.detail||'Failed';}}catch{error='Connection error';}
+  }else if(action==='delete'){const id=form.get('id');try{await fetch(`${API}/api/experience/${id}`,{method:'DELETE',headers:h});items=items.filter((e:any)=>e.id!==id);success='Deleted!';}catch{error='Connection error';}}
+}
+---
+<AdminLayout title="Experience" activePage="experience">
+  <div class="admin-topbar"><div class="admin-topbar-title">Experience</div></div>
+  <div class="admin-content">
+    {error&&<div class="alert alert--error">{error}</div>}
+    {success&&<div class="alert alert--success">{success}</div>}
+    <div style="display:grid;grid-template-columns:340px 1fr;gap:2rem;align-items:start">
+      <div style="background:#19161F;border:1px solid #35303D;border-radius:12px;padding:1.5rem">
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:1.25rem">Add Experience</h3>
+        <form method="POST">
+          <input type="hidden" name="_action" value="create"/>
+          <div class="form-group"><label class="form-label">Organization *</label><input name="organization" class="form-input" required/></div>
+          <div class="form-group"><label class="form-label">Position *</label><input name="position" class="form-input" required/></div>
+          <div class="form-group"><label class="form-label">Type</label>
+            <select name="employment_type" class="form-select"><option value="internship">Internship</option><option value="full-time">Full-time</option><option value="part-time">Part-time</option><option value="freelance">Freelance</option></select>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+            <div class="form-group"><label class="form-label">Start</label><input name="start_date" class="form-input" type="date"/></div>
+            <div class="form-group"><label class="form-label">End</label><input name="end_date" class="form-input" type="date"/></div>
+          </div>
+          <div class="form-group"><label class="form-label">Technologies</label><input name="technologies" class="form-input" placeholder="Python, SQL"/></div>
+          <div class="form-group"><label class="form-label">Description</label><textarea name="description" class="form-input form-textarea" rows="3"></textarea></div>
+          <div class="form-group"><label class="form-label">Display Order</label><input name="display_order" class="form-input" type="number" value="0"/></div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer"><input type="checkbox" name="is_current" style="accent-color:#B794F6;width:16px;height:16px"/><span class="form-label" style="margin:0">Currently here</span></label></div>
+          <button type="submit" class="btn btn--primary" style="width:100%;justify-content:center">Add</button>
+        </form>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        {items.length===0?<div class="empty-state"><p>No experience yet.</p></div>:items.map((exp:any)=>(
+          <div style="background:#19161F;border:1px solid #35303D;border-radius:12px;padding:1.25rem;display:flex;justify-content:space-between;align-items:start;gap:1rem">
+            <div>
+              <div style="color:#F5F0FA;font-weight:600">{exp.position}</div>
+              <div style="color:#B794F6;font-size:14px">{exp.organization}</div>
+              <div style="font-size:12px;color:#6B6475">{exp.employment_type}</div>
+            </div>
+            <form method="POST" style="flex-shrink:0"><input type="hidden" name="_action" value="delete"/><input type="hidden" name="id" value={exp.id}/><button type="submit" class="btn btn--danger btn--sm" onclick="return confirm('Delete?')">Delete</button></form>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</AdminLayout>

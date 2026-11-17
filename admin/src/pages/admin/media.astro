@@ -1,0 +1,95 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+const API = 'http://localhost:8000';
+const session = Astro.cookies.get('session_token');
+const h = { Cookie: `session_token=${session?.value}`, 'Content-Type': 'application/json' };
+const folderFilter = Astro.url.searchParams.get('folder') || '';
+let assets: any[] = [];
+let error = '';
+const url = folderFilter ? `${API}/api/media?folder=${folderFilter}` : `${API}/api/media`;
+try { const r = await fetch(url, { headers: h }); if (r.ok) assets = await r.json(); else error='Failed'; } catch { error='Connection error'; }
+---
+<AdminLayout title="Media" activePage="media">
+  <div class="admin-topbar"><div class="admin-topbar-title">Media Library</div></div>
+  <div class="admin-content">
+    {error && <div class="alert alert--error">{error}</div>}
+    <!-- Upload -->
+    <div style="background:#19161F;border:1px solid #35303D;border-radius:12px;padding:1.5rem;margin-bottom:2rem;max-width:500px">
+      <h3 style="font-size:16px;font-weight:600;margin-bottom:1.25rem">Upload File</h3>
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        <div class="form-group"><label class="form-label">File (image or PDF)</label><input type="file" id="media-file" class="form-input" accept="image/*,.pdf"/></div>
+        <div class="form-group"><label class="form-label">Folder</label>
+          <select id="media-folder" class="form-select">
+            <option value="general">General</option>
+            <option value="projects">Projects</option>
+            <option value="profile">Profile</option>
+            <option value="certifications">Certifications</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Alt text</label><input type="text" id="media-alt" class="form-input" placeholder="Describe the image…"/></div>
+        <button type="button" id="upload-btn" class="btn btn--primary">Upload</button>
+        <div id="upload-result"></div>
+      </div>
+    </div>
+    <!-- Filter -->
+    <div style="display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap">
+      {['', 'projects', 'profile', 'certifications', 'resume', 'general'].map(f => (
+        <a href={`/admin/media${f?'?folder='+f:''}`} class={`btn btn--sm ${folderFilter===f?'btn--primary':'btn--ghost'}`}>{f||'All'}</a>
+      ))}
+    </div>
+    {assets.length === 0 ? (
+      <div class="empty-state"><p>No media files yet.</p></div>
+    ) : (
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem">
+        {assets.map((asset: any) => (
+          <div style="background:#19161F;border:1px solid #35303D;border-radius:8px;overflow:hidden">
+            {asset.file_type.startsWith('image/') ? (
+              <img src={asset.file_url} alt={asset.alt_text||asset.original_filename} style="width:100%;height:120px;object-fit:cover"/>
+            ) : (
+              <div style="height:120px;display:flex;align-items:center;justify-content:center;background:#201C27;color:#A9A1B1;font-size:12px">PDF</div>
+            )}
+            <div style="padding:.75rem">
+              <div style="font-size:11px;color:#A9A1B1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:.25rem">{asset.original_filename}</div>
+              <div style="font-size:10px;color:#6B6475;margin-bottom:.5rem">{(asset.file_size/1024).toFixed(1)} KB · {asset.folder}</div>
+              <button class="btn btn--danger btn--sm del-btn" data-id={asset.id} style="width:100%;justify-content:center">Delete</button>
+              <button class="btn btn--ghost btn--sm copy-btn" data-url={asset.file_url} style="width:100%;justify-content:center;margin-top:.25rem">Copy URL</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</AdminLayout>
+<script>
+document.getElementById('upload-btn')?.addEventListener('click', async () => {
+  const file = (document.getElementById('media-file') as HTMLInputElement).files?.[0];
+  if (!file) return alert('Select a file first');
+  const btn = document.getElementById('upload-btn') as HTMLButtonElement;
+  const result = document.getElementById('upload-result')!;
+  btn.disabled = true; btn.textContent = 'Uploading...';
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('folder', (document.getElementById('media-folder') as HTMLSelectElement).value);
+  fd.append('alt_text', (document.getElementById('media-alt') as HTMLInputElement).value);
+  try {
+    const r = await fetch('http://localhost:8000/api/media/upload', { method:'POST', credentials:'include', body:fd });
+    if (r.ok) { const d = await r.json(); result.innerHTML=`<span style="color:#4ADE80">✓ Uploaded! URL: <a href="${d.file_url}" target="_blank" style="color:#B794F6">${d.file_url}</a></span>`; setTimeout(()=>window.location.reload(),2000); }
+    else { const d = await r.json(); result.textContent=d.detail||'Upload failed'; result.style.color='#F87171'; }
+  } catch { result.textContent='Network error'; result.style.color='#F87171'; }
+  finally { btn.disabled=false; btn.textContent='Upload'; }
+});
+document.querySelectorAll('.del-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    if (!confirm('Delete this asset?')) return;
+    const id = (btn as HTMLElement).dataset.id;
+    const r = await fetch(`http://localhost:8000/api/media/${id}`, { method:'DELETE', credentials:'include' });
+    if (r.ok) window.location.reload(); else alert('Failed to delete');
+  });
+});
+document.querySelectorAll('.copy-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const url = (btn as HTMLElement).dataset.url!;
+    navigator.clipboard.writeText(url).then(() => { btn.textContent='Copied!'; setTimeout(()=>btn.textContent='Copy URL',1500); });
+  });
+});
+</script>

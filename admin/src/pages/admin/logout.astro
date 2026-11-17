@@ -1,0 +1,18 @@
+---
+// Handle POST logout — call API, clear cookie, redirect
+if (Astro.request.method === 'POST') {
+  const sessionToken = Astro.cookies.get('session_token');
+  if (sessionToken) {
+    try {
+      await fetch('http://localhost:8000/api/auth/logout', {
+        method: 'POST',
+        headers: { Cookie: `session_token=${sessionToken.value}` },
+        credentials: 'include',
+      });
+    } catch {}
+    Astro.cookies.delete('session_token', { path: '/' });
+  }
+  return Astro.redirect('/admin/login');
+}
+return Astro.redirect('/admin');
+---

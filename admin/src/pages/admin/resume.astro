@@ -1,0 +1,94 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+const API = 'http://localhost:8000';
+const session = Astro.cookies.get('session_token');
+const h = { Cookie: `session_token=${session?.value}` };
+let resumes: any[] = [];
+let error = '';
+let success = '';
+try { const r = await fetch(`${API}/api/resume`, { headers: h as any }); if (r.ok) resumes = await r.json(); } catch { error='Connection error'; }
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const action = form.get('_action') as string;
+  if (action === 'activate') {
+    const id = form.get('id');
+    try {
+      const r = await fetch(`${API}/api/resume/${id}/activate`, { method:'PATCH', headers: h as any });
+      if (r.ok) { return Astro.redirect('/admin/resume?success=1'); } else error='Failed';
+    } catch { error='Connection error'; }
+  } else if (action === 'delete') {
+    const id = form.get('id');
+    try {
+      const r = await fetch(`${API}/api/resume/${id}`, { method:'DELETE', headers: h as any });
+      if (r.ok) { return Astro.redirect('/admin/resume?success=1'); } else { const d = await r.json(); error=d.detail||'Failed'; }
+    } catch { error='Connection error'; }
+  }
+}
+if (Astro.url.searchParams.get('success')==='1') success='Action completed!';
+---
+<AdminLayout title="Resume" activePage="resume">
+  <div class="admin-topbar"><div class="admin-topbar-title">Resume</div></div>
+  <div class="admin-content">
+    {error && <div class="alert alert--error">{error}</div>}
+    {success && <div class="alert alert--success">{success}</div>}
+    <!-- Upload -->
+    <div style="background:#19161F;border:1px solid #35303D;border-radius:12px;padding:1.5rem;margin-bottom:2rem;max-width:600px">
+      <h3 style="font-size:16px;font-weight:600;margin-bottom:1.25rem">Upload New Resume</h3>
+      <form id="upload-form" style="display:flex;flex-direction:column;gap:1.25rem">
+        <div class="form-group"><label class="form-label">PDF File *</label><input type="file" id="resume-file" accept=".pdf" class="form-input" required/></div>
+        <div class="form-group"><label class="form-label">Label (optional)</label><input type="text" id="resume-label" class="form-input" placeholder="e.g. Software Engineer 2026"/></div>
+        <div class="form-group"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer"><input type="checkbox" id="resume-activate" checked style="accent-color:#B794F6;width:16px;height:16px"/><span class="form-label" style="margin:0">Set as active resume</span></label></div>
+        <button type="submit" class="btn btn--primary" id="upload-btn">Upload Resume</button>
+        <div id="upload-status"></div>
+      </form>
+    </div>
+    <!-- Resume list -->
+    {resumes.length === 0 ? (
+      <div class="empty-state"><p>No resumes uploaded yet.</p></div>
+    ) : (
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Filename</th><th>Version</th><th>Size</th><th>Uploaded</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            {resumes.map((r: any) => (
+              <tr>
+                <td><a href={r.file_url} target="_blank" style="color:#B794F6">{r.original_filename}</a>{r.label && <div style="font-size:11px;color:#6B6475">{r.label}</div>}</td>
+                <td>v{r.version}</td>
+                <td style="font-size:12px">{(r.file_size/1024).toFixed(1)} KB</td>
+                <td style="font-size:12px">{new Date(r.uploaded_at).toLocaleDateString()}</td>
+                <td>{r.is_active ? <span class="badge badge--green">Active</span> : <span class="badge badge--gray">Inactive</span>}</td>
+                <td>
+                  <div style="display:flex;gap:.5rem">
+                    {!r.is_active && (<form method="POST" style="display:inline"><input type="hidden" name="_action" value="activate"/><input type="hidden" name="id" value={r.id}/><button type="submit" class="btn btn--ghost btn--sm">Activate</button></form>)}
+                    {!r.is_active && (<form method="POST" style="display:inline"><input type="hidden" name="_action" value="delete"/><input type="hidden" name="id" value={r.id}/><button type="submit" class="btn btn--danger btn--sm" onclick="return confirm('Delete?')">Delete</button></form>)}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+</AdminLayout>
+<script>
+document.getElementById('upload-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const file = (document.getElementById('resume-file') as HTMLInputElement).files?.[0];
+  if (!file) return;
+  const btn = document.getElementById('upload-btn') as HTMLButtonElement;
+  const status = document.getElementById('upload-status')!;
+  btn.disabled = true; btn.textContent = 'Uploading...';
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('label', (document.getElementById('resume-label') as HTMLInputElement).value);
+  fd.append('activate', String((document.getElementById('resume-activate') as HTMLInputElement).checked));
+  try {
+    const r = await fetch('http://localhost:8000/api/resume/upload', { method:'POST', credentials:'include', body:fd });
+    if (r.ok) { status.textContent='✓ Uploaded!'; status.style.color='#4ADE80'; setTimeout(()=>window.location.reload(),1000); }
+    else { const d = await r.json(); status.textContent = d.detail||'Upload failed'; status.style.color='#F87171'; }
+  } catch { status.textContent='Network error'; status.style.color='#F87171'; }
+  finally { btn.disabled=false; btn.textContent='Upload Resume'; }
+});
+</script>

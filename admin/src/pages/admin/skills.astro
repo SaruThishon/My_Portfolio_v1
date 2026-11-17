@@ -1,0 +1,75 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+const API = 'http://localhost:8000';
+const session = Astro.cookies.get('session_token');
+const h = { Cookie: `session_token=${session?.value}`, 'Content-Type': 'application/json' };
+let skills: any[] = [];
+let error = '';
+let success = '';
+try { const r = await fetch(`${API}/api/skills`, { headers: h }); if (r.ok) skills = await r.json(); } catch { error='Connection error'; }
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const action = form.get('_action') as string;
+  if (action === 'create') {
+    const payload = { name: form.get('name'), category: form.get('category'), proficiency: form.get('proficiency')||null, description: form.get('description')||null, is_visible: form.get('is_visible')==='on', display_order: parseInt(form.get('display_order') as string)||0, icon_name: form.get('icon_name')||null };
+    try { const r = await fetch(`${API}/api/skills`, { method:'POST', headers:h, body:JSON.stringify(payload) }); if (r.ok) { const d = await r.json(); skills=[...skills, d]; success='Skill added!'; } else { const d = await r.json(); error=d.detail||'Failed'; } } catch { error='Connection error'; }
+  } else if (action === 'delete') {
+    const id = form.get('id');
+    try { const r = await fetch(`${API}/api/skills/${id}`, { method:'DELETE', headers:h }); if (r.ok) { skills=skills.filter((s:any)=>s.id!==id); success='Deleted!'; } } catch { error='Connection error'; }
+  }
+}
+
+const categories = [...new Set(skills.map((s:any) => s.category))].sort();
+---
+<AdminLayout title="Skills" activePage="skills">
+  <div class="admin-topbar"><div class="admin-topbar-title">Skills</div></div>
+  <div class="admin-content">
+    {error && <div class="alert alert--error">{error}</div>}
+    {success && <div class="alert alert--success">{success}</div>}
+    <div style="display:grid;grid-template-columns:380px 1fr;gap:2rem;align-items:start">
+      <!-- Add form -->
+      <div style="background:#19161F;border:1px solid #35303D;border-radius:12px;padding:1.5rem">
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:1.25rem">Add Skill</h3>
+        <form method="POST">
+          <input type="hidden" name="_action" value="create"/>
+          <div class="form-group"><label class="form-label">Name *</label><input name="name" class="form-input" required placeholder="Python"/></div>
+          <div class="form-group"><label class="form-label">Category *</label><input name="category" class="form-input" required placeholder="Programming" list="cats"/><datalist id="cats">{categories.map(c=><option value={c}/>)}</datalist></div>
+          <div class="form-group"><label class="form-label">Proficiency</label>
+            <select name="proficiency" class="form-select"><option value="">Select…</option><option>Beginner</option><option>Intermediate</option><option>Advanced</option><option>Expert</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">Description</label><input name="description" class="form-input" placeholder="Optional description"/></div>
+          <div class="form-group"><label class="form-label">Icon Name</label><input name="icon_name" class="form-input" placeholder="python, postgresql…"/></div>
+          <div class="form-group"><label class="form-label">Display Order</label><input name="display_order" class="form-input" type="number" value="0"/></div>
+          <div class="form-group"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer"><input type="checkbox" name="is_visible" checked style="accent-color:#B794F6;width:16px;height:16px"/><span class="form-label" style="margin:0">Visible</span></label></div>
+          <button type="submit" class="btn btn--primary" style="width:100%;justify-content:center">Add Skill</button>
+        </form>
+      </div>
+      <!-- Skills list -->
+      <div>
+        {categories.map(cat => (
+          <div style="margin-bottom:1.5rem">
+            <h3 style="font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#6B6475;margin-bottom:.75rem">{cat}</h3>
+            <div style="display:flex;flex-direction:column;gap:.5rem">
+              {skills.filter((s:any)=>s.category===cat).map((skill:any) => (
+                <div style="background:#19161F;border:1px solid #35303D;border-radius:8px;padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between">
+                  <div>
+                    <span style="color:#F5F0FA;font-weight:500">{skill.name}</span>
+                    {skill.proficiency && <span style="font-size:11px;color:#6B6475;margin-left:.5rem">{skill.proficiency}</span>}
+                    {!skill.is_visible && <span class="badge badge--gray" style="margin-left:.5rem">Hidden</span>}
+                  </div>
+                  <form method="POST" style="display:inline">
+                    <input type="hidden" name="_action" value="delete"/>
+                    <input type="hidden" name="id" value={skill.id}/>
+                    <button type="submit" class="btn btn--danger btn--sm" onclick="return confirm('Delete this skill?')">Delete</button>
+                  </form>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+        {skills.length===0 && <div class="empty-state"><p>No skills yet. Add one using the form.</p></div>}
+      </div>
+    </div>
+  </div>
+</AdminLayout>

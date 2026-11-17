@@ -1,0 +1,33 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/Hero.astro';
+import About from '../components/About.astro';
+import Projects from '../components/Projects.astro';
+import Skills from '../components/Skills.astro';
+import Journey from '../components/Journey.astro';
+import Contact from '../components/Contact.astro';
+import ResumeSection from '../components/ResumeSection.astro';
+import { getProfile, getPublishedProjects, getSkills, getEducation, getExperience, getActiveResume } from '../lib/api';
+
+const [profile, projects, skills, education, experience, resume] = await Promise.all([
+  getProfile(), getPublishedProjects(), getSkills(), getEducation(), getExperience(), getActiveResume(),
+]);
+
+const p = profile || {};
+const title = `${p.full_name || 'Portfolio'} — ${p.professional_title || 'Software Engineer'}`;
+const description = p.hero_description || 'Personal portfolio of a Software Engineer specializing in Python, SQL, and Data Science.';
+---
+<BaseLayout title={title} description={description}>
+  <Hero
+    name={p.full_name} title={p.professional_title} headline={p.hero_headline}
+    description={p.hero_description} isAvailable={p.is_available}
+    availabilityText={p.availability_text} githubUrl={p.github_url}
+    linkedinUrl={p.linkedin_url} email={p.email}
+  />
+  <About bio={p.about_bio} location={p.location} />
+  <Projects projects={projects || []} />
+  <Skills skills={skills || []} />
+  <Journey education={education || []} experience={experience || []} />
+  <ResumeSection resumeUrl={(resume as any)?.file_url} updatedAt={(resume as any)?.uploaded_at} />
+  <Contact email={p.email} githubUrl={p.github_url} linkedinUrl={p.linkedin_url} />
+</BaseLayout>

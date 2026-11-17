@@ -1,0 +1,79 @@
+---
+interface Education { id:string;institution:string;degree:string;field_of_study?:string;start_date?:string;end_date?:string;is_current:boolean;description?:string;grade?:string; }
+interface Experience { id:string;organization:string;position:string;employment_type:string;start_date?:string;end_date?:string;is_current:boolean;description?:string;technologies:string[]; }
+interface Props { education?: Education[]; experience?: Experience[]; }
+const { education=[], experience=[] } = Astro.props;
+function fmt(d?:string){ if(!d) return ''; const dt=new Date(d); return dt.toLocaleDateString('en-US',{year:'numeric',month:'short'}); }
+---
+<section class="journey section" id="journey">
+  <div class="container">
+    <div class="journey__header reveal">
+      <span class="section-label">04 / JOURNEY</span>
+      <h2 class="journey__heading">The road<br/><span class="text-gradient">so far.</span></h2>
+    </div>
+    <div class="journey__grid">
+      <div class="journey__col reveal-left">
+        <h3 class="journey__col-title">Education</h3>
+        <div class="timeline">
+          {education.length===0
+            ? <div class="timeline__empty"><p>Education details coming soon.</p></div>
+            : education.map(edu => (
+              <div class="timeline__item">
+                <div class="timeline__dot" aria-hidden="true"></div>
+                <div class="timeline__content">
+                  <div class="timeline__period">{fmt(edu.start_date)}{edu.start_date&&' — '}{edu.is_current?<span class="timeline__current">Present</span>:fmt(edu.end_date)}</div>
+                  <h4 class="timeline__title">{edu.degree}</h4>
+                  <p class="timeline__org">{edu.institution}</p>
+                  {edu.field_of_study&&<p class="timeline__sub">{edu.field_of_study}</p>}
+                  {edu.grade&&<p class="timeline__sub">Grade: {edu.grade}</p>}
+                  {edu.description&&<p class="timeline__desc">{edu.description}</p>}
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+      <div class="journey__col reveal" style="transition-delay:.15s">
+        <h3 class="journey__col-title">Experience</h3>
+        <div class="timeline">
+          {experience.length===0
+            ? <div class="timeline__empty"><p>Experience details coming soon.</p></div>
+            : experience.map(exp => (
+              <div class="timeline__item">
+                <div class="timeline__dot" aria-hidden="true"></div>
+                <div class="timeline__content">
+                  <div class="timeline__period">{fmt(exp.start_date)}{exp.start_date&&' — '}{exp.is_current?<span class="timeline__current">Present</span>:fmt(exp.end_date)}</div>
+                  <h4 class="timeline__title">{exp.position}</h4>
+                  <p class="timeline__org">{exp.organization}</p>
+                  <p class="timeline__sub">{exp.employment_type}</p>
+                  {exp.description&&<p class="timeline__desc">{exp.description}</p>}
+                  {exp.technologies.length>0&&<div class="timeline__tech">{exp.technologies.slice(0,5).map(t=><span class="tag">{t}</span>)}</div>}
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.journey__header{margin-bottom:3rem}.journey__heading{font-size:var(--text-5xl);margin-block:1rem}
+.journey__grid{display:grid;grid-template-columns:1fr 1fr;gap:4rem}
+@media(max-width:768px){.journey__grid{grid-template-columns:1fr;gap:3rem}}
+.journey__col-title{font-size:var(--text-sm);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-muted);margin-bottom:2rem}
+.timeline{position:relative}
+.timeline::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:1px;background:var(--color-border)}
+.timeline__item{display:flex;gap:1.5rem;padding-bottom:2rem}
+.timeline__dot{width:8px;height:8px;border-radius:50%;background:var(--color-accent-primary);flex-shrink:0;margin-top:6px;position:relative;z-index:1;box-shadow:0 0 0 3px rgba(183,148,246,.15)}
+.timeline__content{flex:1}
+.timeline__period{font-size:.75rem;font-weight:500;color:var(--color-text-muted);letter-spacing:.05em;margin-bottom:.5rem}
+.timeline__current{color:var(--color-accent-primary)}
+.timeline__title{font-size:var(--text-base);font-weight:600;color:var(--color-text-primary);margin-bottom:.25rem}
+.timeline__org{font-size:var(--text-sm);color:var(--color-accent-primary);font-weight:500;margin-bottom:.25rem}
+.timeline__sub{font-size:var(--text-xs);color:var(--color-text-muted);margin-bottom:.25rem}
+.timeline__desc{font-size:var(--text-sm);color:var(--color-text-secondary);line-height:1.7;margin-top:.5rem}
+.timeline__tech{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.75rem}
+.timeline__empty{padding:2rem;border:1px dashed var(--color-border);border-radius:var(--radius-lg);color:var(--color-text-muted);font-size:var(--text-sm)}
+</style>

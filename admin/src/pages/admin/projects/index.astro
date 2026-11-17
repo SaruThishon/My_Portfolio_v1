@@ -1,0 +1,105 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+
+const API = 'http://localhost:8000';
+const session = Astro.cookies.get('session_token');
+const headers = { Cookie: `session_token=${session?.value}`, 'Content-Type': 'application/json' };
+
+let projects: any[] = [];
+let error = '';
+try {
+  const res = await fetch(`${API}/api/projects`, { headers });
+  if (res.ok) projects = await res.json();
+  else error = 'Failed to load projects';
+} catch { error = 'Connection error'; }
+---
+<AdminLayout title="Projects" activePage="projects">
+  <div class="admin-topbar">
+    <div class="admin-topbar-title">Projects</div>
+    <div class="admin-topbar-actions">
+      <a href="/admin/projects/new" class="btn btn--primary">+ New Project</a>
+    </div>
+  </div>
+  <div class="admin-content">
+    {error && <div class="alert alert--error">{error}</div>}
+    {projects.length === 0 ? (
+      <div class="empty-state">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 9 6 6M15 9l-6 6"/></svg>
+        <h3>No projects yet</h3>
+        <p>Create your first project to get started.</p>
+        <a href="/admin/projects/new" class="btn btn--primary">+ New Project</a>
+      </div>
+    ) : (
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Title</th><th>Category</th><th>Status</th><th>Featured</th><th>Updated</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {projects.map((p: any) => (
+              <tr>
+                <td>
+                  <div style="color:#F5F0FA;font-weight:500">{p.title}</div>
+                  <div style="font-size:11px;color:#6B6475;margin-top:2px">/projects/{p.slug}</div>
+                </td>
+                <td>{p.category}</td>
+                <td>
+                  <span class={`badge ${p.status==='published'?'badge--green':'badge--gray'}`}>{p.status}</span>
+                </td>
+                <td>
+                  {p.is_featured ? <span class="badge badge--violet">Featured</span> : <span style="color:#6B6475">—</span>}
+                </td>
+                <td style="font-size:12px">{new Date(p.updated_at).toLocaleDateString()}</td>
+                <td>
+                  <div style="display:flex;gap:.5rem">
+                    <a href={`/admin/projects/${p.id}/edit`} class="btn btn--ghost btn--sm">Edit</a>
+                    <button
+                      class="btn btn--ghost btn--sm toggle-status-btn"
+                      data-id={p.id}
+                      data-status={p.status}
+                    >
+                      {p.status === 'published' ? 'Unpublish' : 'Publish'}
+                    </button>
+                    <button class="btn btn--danger btn--sm delete-btn" data-id={p.id} data-title={p.title}>Delete</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+</AdminLayout>
+
+<script>
+document.querySelectorAll('.toggle-status-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const id = (btn as HTMLElement).dataset.id;
+    const currentStatus = (btn as HTMLElement).dataset.status;
+    const newStatus = currentStatus === 'published' ? 'draft' : 'published';
+    const res = await fetch(`http://localhost:8000/api/projects/${id}/status`, {
+      method: 'PATCH', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    if (res.ok) window.location.reload();
+    else alert('Failed to update status');
+  });
+});
+
+document.querySelectorAll('.delete-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const id = (btn as HTMLElement).dataset.id;
+    const title = (btn as HTMLElement).dataset.title;
+    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+    const res = await fetch(`http://localhost:8000/api/projects/${id}`, {
+      method: 'DELETE', credentials: 'include',
+    });
+    if (res.ok) window.location.reload();
+    else alert('Failed to delete project');
+  });
+});
+</script>
