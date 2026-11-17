@@ -14,6 +14,7 @@ class ProfileUpdate(BaseModel):
     location: Optional[str] = None
     is_available: Optional[bool] = None
     availability_text: Optional[str] = None
+    is_online_public: Optional[bool] = None
     email: Optional[str] = None
     github_url: Optional[str] = None
     linkedin_url: Optional[str] = None
@@ -33,6 +34,7 @@ class ProfileOut(BaseModel):
     location: Optional[str] = None
     is_available: bool
     availability_text: str
+    is_online_public: bool
     email: Optional[str] = None
     github_url: Optional[str] = None
     linkedin_url: Optional[str] = None

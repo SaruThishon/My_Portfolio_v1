@@ -1,4 +1,4 @@
-"""Admin utility endpoints — activity logs, build hooks, dashboard stats."""
+"""Admin utility endpoints — activity logs, build hooks, dashboard stats, presence."""
 import hmac
 import hashlib
 from fastapi import APIRouter, Depends, HTTPException, Header
@@ -11,6 +11,8 @@ from app.core.config import settings
 from app.models.activity import ActivityLog
 from app.models.enquiries import Enquiry
 from app.models.projects import Project
+from app.models.profile import Profile
+from app.models.auth import AdminUser
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -90,3 +92,56 @@ async def trigger_build(
                 return {"triggered": False, "error": str(e)}
 
     return {"triggered": True, "message": "Build hook URL not configured — running locally"}
+
+
+# ── Presence / Online-Offline ─────────────────────────────────────────────────
+
+@router.get("/presence")
+async def get_presence(
+    db: AsyncSession = Depends(get_db),
+    current_admin=Depends(get_current_admin),
+):
+    """
+    Returns the current online/offline status and last_login timestamp.
+    Used by the admin dashboard presence card.
+    """
+    # Get profile is_online_public
+    profile_result = await db.execute(select(Profile))
+    profile = profile_result.scalar_one_or_none()
+    is_online = profile.is_online_public if profile else True
+
+    # Get last_login from the admin user
+    admin_result = await db.execute(select(AdminUser).where(AdminUser.id == current_admin.id))
+    admin = admin_result.scalar_one_or_none()
+    last_login_iso = admin.last_login.isoformat() if admin and admin.last_login else None
+
+    return {
+        "is_online": is_online,
+        "last_login": last_login_iso,
+    }
+
+
+@router.patch("/presence")
+async def set_presence(
+    db: AsyncSession = Depends(get_db),
+    current_admin=Depends(get_current_admin),
+):
+    """
+    Toggles the public online/offline status.
+    When set offline, the public hero will show 'Last seen X ago' based on last_login.
+    """
+    from app.routers.profile import get_or_create_profile
+    profile = await get_or_create_profile(db)
+    profile.is_online_public = not profile.is_online_public
+    await db.commit()
+    await db.refresh(profile)
+
+    # Get last_login for the response
+    admin_result = await db.execute(select(AdminUser).where(AdminUser.id == current_admin.id))
+    admin = admin_result.scalar_one_or_none()
+    last_login_iso = admin.last_login.isoformat() if admin and admin.last_login else None
+
+    return {
+        "is_online": profile.is_online_public,
+        "last_login": last_login_iso,
+    }

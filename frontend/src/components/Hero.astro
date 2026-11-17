@@ -4,34 +4,42 @@ interface Props {
   title?: string;
   description?: string;
   profileImageUrl?: string;
-  location?: string;
   githubUrl?: string;
   linkedinUrl?: string;
   email?: string;
   updatedAt?: string;
+  isOnlinePublic?: boolean;
 }
 const {
   name = 'Your Name',
   title = 'Software Engineer',
   description = 'Exploring the world of Python, databases and data science. Building practical solutions through code, curiosity and continuous learning.',
   profileImageUrl = '',
-  location = '',
   githubUrl = '',
   linkedinUrl = '',
   email = '',
   updatedAt = '',
+  isOnlinePublic = true,
 } = Astro.props;
 
-// Compute activity status server-side — no client JS needed
-function getActivityStatus(iso: string) {
-  if (!iso) return { label: 'Active', dot: '#4ADE80', dimmed: false };
+// Compute activity status server-side — no client JS needed.
+// When admin sets is_online_public = false, show "last seen X ago" from updatedAt.
+// When is_online_public = true, always show green "Active".
+function getActivityStatus(isOnline: boolean, iso: string) {
+  if (isOnline) {
+    return { label: 'Online', dot: '#4ADE80', dimmed: false };
+  }
+  // Offline mode — show last seen relative time
+  if (!iso) return { label: 'Offline', dot: '#6B6475', dimmed: true };
   const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-  if (days < 1)  return { label: 'Active today',           dot: '#4ADE80', dimmed: false };
-  if (days < 7)  return { label: `Active · ${days}d ago`,  dot: '#4ADE80', dimmed: false };
-  if (days < 30) return { label: `Active · ${Math.floor(days / 7)}w ago`, dot: '#FBBF24', dimmed: false };
-  return               { label: `Away · ${Math.floor(days / 30)}mo ago`,  dot: '#6B6475', dimmed: true };
+  const hrs  = Math.floor((Date.now() - new Date(iso).getTime()) / 3600000);
+  if (hrs < 1)   return { label: 'Last seen just now',          dot: '#6B6475', dimmed: true };
+  if (hrs < 24)  return { label: `Last seen ${hrs}h ago`,       dot: '#6B6475', dimmed: true };
+  if (days < 7)  return { label: `Last seen ${days}d ago`,      dot: '#6B6475', dimmed: true };
+  if (days < 30) return { label: `Last seen ${Math.floor(days/7)}w ago`, dot: '#6B6475', dimmed: true };
+  return               { label: `Last seen ${Math.floor(days/30)}mo ago`, dot: '#6B6475', dimmed: true };
 }
-const activity = getActivityStatus(updatedAt);
+const activity = getActivityStatus(isOnlinePublic, updatedAt);
 
 // Split name for large display — first name white, last name violet gradient
 const nameParts = name.trim().split(' ');
@@ -99,15 +107,8 @@ const titlesJson = JSON.stringify(titleParts);
         </span>
       </div>
 
-      <!-- Location + activity status — below title -->
+      <!-- Activity status only (location removed) -->
       <div class="hero__meta hero__enter-3">
-        {location && (
-          <span class="hero__meta-loc">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            {location.trim()}
-          </span>
-        )}
-        <span class="hero__meta-sep" aria-hidden="true">·</span>
         <span class="hero__meta-status">
           <span class="hero__status-dot" style={`background:${activity.dot}`} aria-hidden="true"></span>
           <span style={activity.dimmed ? 'color:#6B6475' : ''}>{activity.label}</span>
@@ -172,43 +173,52 @@ const titlesJson = JSON.stringify(titleParts);
     var el = document.getElementById('hero-title-rotating');
     if (!el) return;
 
-    var current = 0;
-    var HOLD_MS  = 2400;   // visible duration per title
-    var OUT_MS   = 350;    // exit animation duration
-    var IN_MS    = 350;    // enter animation duration
+    // Reduced-motion: show all titles joined, no animation
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.textContent = titles.join(' · ');
+      return;
+    }
 
-    function rotateTo(index) {
-      // Exit: slide up + fade out
-      el.style.transition = 'opacity ' + OUT_MS + 'ms ease, transform ' + OUT_MS + 'ms cubic-bezier(0.4,0,1,1)';
-      el.style.opacity    = '0';
-      el.style.transform  = 'translateY(-12px)';
+    var current = 0;
+    var HOLD_MS = 2600;  // time each title is visible
+    var OUT_MS  = 400;   // exit (flip away) duration
+    var IN_MS   = 400;   // enter (flip in) duration
+
+    function flipTo(index) {
+      // ── Phase 1: EXIT — rotate current title away to the right ──────────────
+      // The near (left) edge stays, far (right) edge swings back → rotateY(90deg)
+      el.style.transition =
+        'transform ' + OUT_MS + 'ms cubic-bezier(0.55, 0, 1, 0.45), ' +
+        'opacity ' + (OUT_MS * 0.6) + 'ms ease';
+      el.style.transform = 'rotateY(90deg)';
+      el.style.opacity   = '0';
 
       setTimeout(function() {
-        // Swap text while invisible — start below
+        // ── Phase 2: SNAP — change text while element is edge-on (invisible) ──
         el.textContent = titles[index];
+
+        // Start position: rotated in from the left side
+        // rotateY(-90deg) = near (left) edge is back, far (right) swings forward
         el.style.transition = 'none';
-        el.style.transform  = 'translateY(14px)';
+        el.style.transform  = 'rotateY(-90deg)';
         el.style.opacity    = '0';
 
-        // Force reflow so the browser registers the starting position
+        // Force browser reflow so it registers the -90deg starting state
         void el.offsetHeight;
 
-        // Enter: slide up + fade in
-        el.style.transition = 'opacity ' + IN_MS + 'ms ease, transform ' + IN_MS + 'ms cubic-bezier(0,0,0.2,1)';
-        el.style.opacity    = '1';
-        el.style.transform  = 'translateY(0)';
+        // ── Phase 3: ENTER — rotate the new title into the flat (0deg) position
+        el.style.transition =
+          'transform ' + IN_MS + 'ms cubic-bezier(0, 0.55, 0.45, 1), ' +
+          'opacity ' + (IN_MS * 0.5) + 'ms ease ' + (IN_MS * 0.1) + 'ms';
+        el.style.transform = 'rotateY(0deg)';
+        el.style.opacity   = '1';
       }, OUT_MS);
     }
 
-    // Start cycling after the initial hold period
+    // Kick off the cycle after the initial hold
     setInterval(function() {
       current = (current + 1) % titles.length;
-      rotateTo(current);
+      flipTo(current);
     }, HOLD_MS + OUT_MS);
-
-    // Respect reduced-motion preference
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      el.textContent = titles.join(' · ');
-    }
   })();
 </script>

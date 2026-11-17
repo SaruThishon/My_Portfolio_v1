@@ -23,11 +23,11 @@ const description = p.hero_description || 'Personal portfolio of a Software Engi
     title={p.professional_title}
     description={p.hero_description}
     profileImageUrl={p.profile_image_url}
-    location={p.location}
     githubUrl={p.github_url}
     linkedinUrl={p.linkedin_url}
     email={p.email}
     updatedAt={p.updated_at}
+    isOnlinePublic={p.is_online_public ?? true}
   />
   <About bio={p.about_bio} location={p.location} />
   <Projects projects={projects || []} />

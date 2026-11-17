@@ -1,5 +1,5 @@
 /* Hero base + portrait + name */
-.hero{position:relative;min-height:100svh;display:flex;flex-direction:column;justify-content:center;overflow:hidden;padding-top:64px}
+.hero{position:relative;min-height:100svh;display:flex;flex-direction:column;justify-content:center;overflow:hidden;padding-top:72px}
 .hero__bg{position:absolute;inset:0;pointer-events:none;z-index:0}
 .hero__bg-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(53,48,61,.2) 1px,transparent 1px),linear-gradient(90deg,rgba(53,48,61,.2) 1px,transparent 1px);background-size:72px 72px;mask-image:radial-gradient(ellipse 100% 100% at 50% 0%,black 20%,transparent 80%)}
 .hero__bg-orb{position:absolute;border-radius:50%;filter:blur(110px);opacity:.08;animation:orb-drift 14s ease-in-out infinite alternate}
@@ -7,8 +7,8 @@
 .hero__bg-orb--2{width:320px;height:320px;right:30%;bottom:5%;background:#A78BFA;animation-delay:-7s}
 @keyframes orb-drift{from{transform:translate(0,0)}to{transform:translate(16px,-16px) scale(1.07)}}
 @media(prefers-reduced-motion:reduce){.hero__bg-orb{animation:none}}
-.hero__container{position:relative;z-index:1;padding-block:clamp(3rem,8vw,5rem)}
-.hero__container--with-image{display:grid;grid-template-columns:420px 1fr;gap:clamp(2rem,5vw,5rem);align-items:center}
+.hero__container{position:relative;z-index:1;padding-block:clamp(3.5rem,8vw,6rem)}
+.hero__container--with-image{display:grid;grid-template-columns:440px 1fr;gap:clamp(2.5rem,5vw,6rem);align-items:center}
 .hero__portrait-col{position:relative;display:flex;align-items:center;justify-content:center;min-height:520px;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 8%,black 92%,transparent 100%),linear-gradient(to right,black 0%,black 72%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0%,black 8%,black 92%,transparent 100%),linear-gradient(to right,black 0%,black 72%,transparent 100%);-webkit-mask-composite:destination-in;mask-composite:intersect}
 .hero__portrait-glow{position:absolute;inset:-8%;background:radial-gradient(ellipse 70% 60% at 50% 50%,rgba(183,148,246,.11) 0%,transparent 65%);z-index:0}
 .hero__portrait-img-wrap{position:relative;z-index:1;width:100%;animation:portrait-float 8s ease-in-out infinite}
@@ -18,9 +18,23 @@
 @media(prefers-reduced-motion:reduce){.hero__portrait-img-wrap,.hero__portrait-enter .hero__portrait-img-wrap{animation:none;opacity:1;transform:none}}
 .hero__portrait-img{width:100%;height:auto;max-height:640px;object-fit:cover;object-position:top center;display:block}
 .hero__content{min-width:0}
-.hero__name-display{font-family:'Space Grotesk',-apple-system,sans-serif;font-weight:700;letter-spacing:-.045em;line-height:.93;font-size:clamp(3rem,8vw,6.5rem);display:flex;flex-direction:column;margin:0 0 .75rem}
+.hero__name-display{font-family:'Space Grotesk',-apple-system,sans-serif;font-weight:700;letter-spacing:-.045em;line-height:.93;font-size:clamp(3.5rem,9vw,8rem);display:flex;flex-direction:column;margin:0 0 .75rem}
 .hero__firstname{display:block;color:#F5F0FA}
 .hero__lastname{display:block;background:linear-gradient(135deg,#B794F6 0%,#A78BFA 50%,#C4A8FF 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hero__title-wrap{height:1.7em;overflow:hidden;display:flex;align-items:center;margin-top:.25rem}
+.hero__title-wrap{
+  height:2em;
+  overflow:visible;  /* must be visible for 3D rotation not to be clipped */
+  display:flex;align-items:center;margin-top:.5rem;
+  perspective:600px;  /* 3D stage for the Y-axis rotation */
+}
 .hero__title-static{display:none}
-.hero__title-rotating{font-family:'Space Grotesk',sans-serif;font-size:clamp(1rem,2.4vw,1.35rem);font-weight:400;color:#A9A1B1;letter-spacing:.01em;display:inline-block}
+.hero__title-rotating{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:clamp(1.1rem,2.6vw,1.5rem);
+  font-weight:400;color:#A9A1B1;letter-spacing:.01em;
+  display:inline-block;
+  transform-origin:center center;
+  transform-style:preserve-3d;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+}

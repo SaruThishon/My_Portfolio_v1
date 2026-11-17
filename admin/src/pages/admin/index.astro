@@ -9,16 +9,19 @@ const headers: Record<string, string> = { Cookie: `session_token=${sessionVal}`,
 let stats: any = null;
 let activityLogs: any[] = [];
 let enquiryStats: any = null;
+let presence: any = { is_online: true, last_login: null };
 
 try {
-  const [statsRes, logsRes, enqStatsRes] = await Promise.all([
+  const [statsRes, logsRes, enqStatsRes, presenceRes] = await Promise.all([
     fetch(`${API}/api/admin/dashboard-stats`, { headers }),
     fetch(`${API}/api/admin/activity-logs?limit=8`, { headers }),
     fetch(`${API}/api/enquiries/stats`, { headers }),
+    fetch(`${API}/api/admin/presence`, { headers }),
   ]);
   if (statsRes.ok) stats = await statsRes.json();
   if (logsRes.ok) activityLogs = await logsRes.json();
   if (enqStatsRes.ok) enquiryStats = await enqStatsRes.json();
+  if (presenceRes.ok) presence = await presenceRes.json();
 } catch {}
 
 const unread = enquiryStats?.unread ?? 0;
@@ -132,5 +135,92 @@ function timeAgo(iso: string) {
       <a href="/admin/profile" class="btn btn--ghost">Edit Profile</a>
       <a href="/admin/resume" class="btn btn--ghost">Manage Resume</a>
     </div>
+
+    <!-- Presence Card -->
+    <div style="margin-top:2rem;background:#19161F;border:1px solid #35303D;border-radius:12px;padding:1.5rem;max-width:420px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+        <h3 style="font-size:14px;font-weight:600;color:#F5F0FA">Public Presence</h3>
+        <span style="font-size:11px;color:#6B6475;letter-spacing:.05em;text-transform:uppercase">Hero indicator</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem">
+        <div style="display:flex;align-items:center;gap:.75rem">
+          <div
+            id="presence-dot"
+            style={`width:10px;height:10px;border-radius:50%;background:${presence.is_online ? '#4ADE80' : '#6B6475'};box-shadow:${presence.is_online ? '0 0 0 3px rgba(74,222,128,.2)' : 'none'};flex-shrink:0`}
+          ></div>
+          <div>
+            <div id="presence-label" style={`font-size:14px;font-weight:600;color:${presence.is_online ? '#4ADE80' : '#A9A1B1'}`}>
+              {presence.is_online ? 'Online' : 'Offline'}
+            </div>
+            {!presence.is_online && presence.last_login && (
+              <div id="presence-sublabel" style="font-size:11px;color:#6B6475;margin-top:2px">
+                Last seen: {timeAgo(presence.last_login)}
+              </div>
+            )}
+            {presence.is_online && (
+              <div style="font-size:11px;color:#6B6475;margin-top:2px">Visible on the public portfolio</div>
+            )}
+          </div>
+        </div>
+        <button
+          id="presence-toggle"
+          class={`btn btn--sm ${presence.is_online ? 'btn--ghost' : 'btn--primary'}`}
+          data-is-online={String(presence.is_online)}
+        >
+          {presence.is_online ? 'Go Offline' : 'Go Online'}
+        </button>
+      </div>
+      <div id="presence-status" style="margin-top:.75rem;font-size:12px;min-height:1em"></div>
+    </div>
   </div>
 </AdminLayout>
+
+<script>
+(function() {
+  const btn = document.getElementById('presence-toggle') as HTMLButtonElement | null;
+  const dot = document.getElementById('presence-dot') as HTMLElement | null;
+  const label = document.getElementById('presence-label') as HTMLElement | null;
+  const status = document.getElementById('presence-status') as HTMLElement | null;
+  if (!btn || !dot || !label) return;
+
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    btn.textContent = 'Updating...';
+    if (status) { status.textContent = ''; }
+
+    try {
+      const r = await fetch('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ method: 'PATCH', path: '/api/admin/presence' }),
+      });
+      const d = await r.json();
+      if (r.ok) {
+        const isOnline = d.is_online as boolean;
+        // Update dot colour
+        dot.style.background = isOnline ? '#4ADE80' : '#6B6475';
+        dot.style.boxShadow  = isOnline ? '0 0 0 3px rgba(74,222,128,.2)' : 'none';
+        // Update label
+        label.textContent  = isOnline ? 'Online' : 'Offline';
+        label.style.color  = isOnline ? '#4ADE80' : '#A9A1B1';
+        // Update button
+        btn.textContent = isOnline ? 'Go Offline' : 'Go Online';
+        btn.className   = `btn btn--sm ${isOnline ? 'btn--ghost' : 'btn--primary'}`;
+        btn.dataset.isOnline = String(isOnline);
+        if (status) {
+          status.textContent = isOnline
+            ? '✓ Now showing as Online on your portfolio.'
+            : '✓ Now showing as Offline. Last seen time will be displayed.';
+          status.style.color = '#4ADE80';
+        }
+      } else {
+        if (status) { status.textContent = 'Failed to update. Try again.'; status.style.color = '#F87171'; }
+      }
+    } catch {
+      if (status) { status.textContent = 'Network error.'; status.style.color = '#F87171'; }
+    } finally {
+      btn.disabled = false;
+    }
+  });
+})();
+</script>

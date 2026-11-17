@@ -19,6 +19,9 @@ class Profile(Base):
     location: Mapped[str | None] = mapped_column(String(100), nullable=True, default="India")
     is_available: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     availability_text: Mapped[str] = mapped_column(String(100), default="Open to opportunities", nullable=False)
+    # Controls the public activity indicator on the hero section.
+    # True = show green "Active" dot. False = show grey "Last seen X ago" (derived from admin last_login).
+    is_online_public: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     github_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     linkedin_url: Mapped[str | None] = mapped_column(Text, nullable=True)
