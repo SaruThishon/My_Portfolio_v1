@@ -43,17 +43,46 @@ def validate_file(content: bytes, content_type: str, is_document: bool = False) 
 
 def process_image(content: bytes, content_type: str) -> Tuple[bytes, int, int]:
     img = Image.open(io.BytesIO(content))
-    if img.mode in ("RGBA", "P"):
-        bg = Image.new("RGB", img.size, (255, 255, 255))
+
+    # Determine output format: keep PNG as PNG (preserves transparency),
+    # convert everything else to JPEG.
+    is_png = content_type == "image/png" or img.format == "PNG"
+
+    if is_png:
+        # Keep alpha channel for PNGs so the portrait blends naturally on
+        # the dark background without a white fill appearing.
         if img.mode == "P":
             img = img.convert("RGBA")
-        bg.paste(img, mask=img.split()[3] if img.mode == "RGBA" else None)
-        img = bg
+        elif img.mode not in ("RGBA", "RGB", "LA", "L"):
+            img = img.convert("RGBA")
+    else:
+        # For JPEG and other non-PNG formats, fill transparency with the
+        # portfolio dark background colour (#111014) so there is no white flash.
+        if img.mode in ("RGBA", "P", "LA"):
+            if img.mode == "P":
+                img = img.convert("RGBA")
+            elif img.mode == "LA":
+                img = img.convert("RGBA")
+            # Dark background — matches the portfolio bg: #111014 = (17, 16, 20)
+            bg = Image.new("RGB", img.size, (17, 16, 20))
+            if img.mode == "RGBA":
+                bg.paste(img, mask=img.split()[3])
+            else:
+                bg.paste(img)
+            img = bg
+        elif img.mode != "RGB":
+            img = img.convert("RGB")
+
+    # Resize if too wide
     if img.width > IMAGE_MAX_WIDTH:
         ratio = IMAGE_MAX_WIDTH / img.width
         img = img.resize((IMAGE_MAX_WIDTH, int(img.height * ratio)), Image.LANCZOS)
+
     output = io.BytesIO()
-    img.save(output, format="JPEG" if content_type == "image/jpeg" else "PNG", quality=85, optimize=True)
+    if is_png:
+        img.save(output, format="PNG", optimize=True)
+    else:
+        img.save(output, format="JPEG", quality=87, optimize=True)
     output.seek(0)
     return output.read(), img.width, img.height
 
@@ -64,21 +93,31 @@ async def upload_file(content: bytes, original_filename: str, content_type: str,
     width = height = None
     if content_type in ALLOWED_IMAGE_TYPES:
         content, width, height = process_image(content, content_type)
-    ext = Path(original_filename).suffix.lower() or ".bin"
-    if content_type == "image/jpeg": ext = ".jpg"
-    elif content_type == "image/png": ext = ".png"
+    # Extension and content-type must reflect what process_image actually saved
+    # (PNG files stay PNG; everything else becomes JPEG)
+    if content_type in ALLOWED_IMAGE_TYPES:
+        if content_type == "image/png":
+            ext = ".png"
+            final_content_type = "image/png"
+        else:
+            ext = ".jpg"
+            final_content_type = "image/jpeg"
+    else:
+        ext = Path(original_filename).suffix.lower() or ".bin"
+        final_content_type = content_type
+
     stored_filename = f"{folder}/{uuid.uuid4().hex}{ext}"
     if _provider() == 'local':
         dest = LOCAL_STORAGE_DIR / stored_filename
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_bytes(content)
     else:
-        await _upload_s3(content, stored_filename, content_type)
+        await _upload_s3(content, stored_filename, final_content_type)
     return {
         "stored_filename": stored_filename,
         "file_url": build_public_url(stored_filename),
         "file_size": len(content),
-        "width": width, "height": height, "content_type": content_type,
+        "width": width, "height": height, "content_type": final_content_type,
     }
 
 
