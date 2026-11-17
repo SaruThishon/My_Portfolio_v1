@@ -61,35 +61,64 @@ try { const r = await fetch(url, { headers: h }); if (r.ok) assets = await r.jso
   </div>
 </AdminLayout>
 <script>
+// Upload via SSR proxy to avoid cross-origin cookie issue
 document.getElementById('upload-btn')?.addEventListener('click', async () => {
   const file = (document.getElementById('media-file') as HTMLInputElement).files?.[0];
-  if (!file) return alert('Select a file first');
+  if (!file) { alert('Please select a file first.'); return; }
   const btn = document.getElementById('upload-btn') as HTMLButtonElement;
   const result = document.getElementById('upload-result')!;
   btn.disabled = true; btn.textContent = 'Uploading...';
+  result.textContent = '';
+
   const fd = new FormData();
   fd.append('file', file);
   fd.append('folder', (document.getElementById('media-folder') as HTMLSelectElement).value);
-  fd.append('alt_text', (document.getElementById('media-alt') as HTMLInputElement).value);
+  fd.append('alt_text', (document.getElementById('media-alt') as HTMLInputElement).value || '');
+
   try {
-    const r = await fetch('http://localhost:8000/api/media/upload', { method:'POST', credentials:'include', body:fd });
-    if (r.ok) { const d = await r.json(); result.innerHTML=`<span style="color:#4ADE80">✓ Uploaded! URL: <a href="${d.file_url}" target="_blank" style="color:#B794F6">${d.file_url}</a></span>`; setTimeout(()=>window.location.reload(),2000); }
-    else { const d = await r.json(); result.textContent=d.detail||'Upload failed'; result.style.color='#F87171'; }
-  } catch { result.textContent='Network error'; result.style.color='#F87171'; }
-  finally { btn.disabled=false; btn.textContent='Upload'; }
+    const r = await fetch('/api/upload-media', { method: 'POST', body: fd });
+    const d = await r.json();
+    if (r.ok) {
+      result.innerHTML = `<span style="color:#4ADE80">✓ Uploaded! <button onclick="navigator.clipboard.writeText('${d.file_url}').then(()=>this.textContent='Copied!')" style="background:rgba(183,148,246,.1);border:1px solid rgba(183,148,246,.2);color:#B794F6;padding:.2em .6em;border-radius:4px;cursor:pointer;font-size:11px;margin-left:.5rem">Copy URL</button><br/><span style="font-size:11px;color:#A9A1B1;word-break:break-all">${d.file_url}</span></span>`;
+      setTimeout(() => window.location.reload(), 2500);
+    } else {
+      result.textContent = d.detail || 'Upload failed. Please try again.';
+      result.style.color = '#F87171';
+    }
+  } catch {
+    result.textContent = 'Network error — make sure all services are running.';
+    result.style.color = '#F87171';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Upload';
+  }
 });
+
+// Delete via JSON proxy
 document.querySelectorAll('.del-btn').forEach(btn => {
   btn.addEventListener('click', async () => {
-    if (!confirm('Delete this asset?')) return;
+    if (!confirm('Delete this asset? This cannot be undone.')) return;
     const id = (btn as HTMLElement).dataset.id;
-    const r = await fetch(`http://localhost:8000/api/media/${id}`, { method:'DELETE', credentials:'include' });
-    if (r.ok) window.location.reload(); else alert('Failed to delete');
+    try {
+      const r = await fetch('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ method: 'DELETE', path: `/api/media/${id}` }),
+      });
+      if (r.ok || r.status === 204) window.location.reload();
+      else alert('Failed to delete asset.');
+    } catch { alert('Network error.'); }
   });
 });
+
+// Copy URL to clipboard
 document.querySelectorAll('.copy-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const url = (btn as HTMLElement).dataset.url!;
-    navigator.clipboard.writeText(url).then(() => { btn.textContent='Copied!'; setTimeout(()=>btn.textContent='Copy URL',1500); });
+    navigator.clipboard.writeText(url).then(() => {
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy URL', 1500);
+    });
   });
 });
 </script>

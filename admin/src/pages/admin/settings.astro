@@ -44,15 +44,23 @@ if(Astro.request.method==='POST'){
 document.getElementById('publish-btn')?.addEventListener('click', async () => {
   const btn = document.getElementById('publish-btn') as HTMLButtonElement;
   const status = document.getElementById('publish-status')!;
-  btn.disabled = true; btn.textContent = 'Triggering…';
+  btn.disabled = true; btn.textContent = 'Triggering…'; status.textContent = '';
   try {
+    // The trigger-build endpoint uses a shared secret, not a session cookie.
+    // It's safe to call directly — no authenticated session needed.
     const r = await fetch('http://localhost:8000/api/admin/trigger-build', {
-      method: 'POST', headers: { 'x-build-secret': 'dev_build_hook_secret' },
+      method: 'POST',
+      headers: { 'x-build-secret': 'dev_build_hook_secret' },
     });
     const d = await r.json();
-    status.textContent = d.message || (d.triggered ? '✓ Build triggered!' : '✗ Failed');
+    status.textContent = d.message || (d.triggered ? '✓ Build triggered!' : '✗ Trigger failed');
     status.style.color = d.triggered ? '#4ADE80' : '#F87171';
-  } catch { status.textContent = 'Network error'; status.style.color = '#F87171'; }
-  finally { btn.disabled = false; btn.textContent = 'Trigger Build'; }
+  } catch {
+    status.textContent = 'Network error — make sure the backend is running.';
+    status.style.color = '#F87171';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Trigger Build';
+  }
 });
 </script>

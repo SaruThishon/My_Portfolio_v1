@@ -77,10 +77,17 @@ function typeLabel(t: string) {
 <script>
 document.querySelectorAll('.del-btn').forEach(btn => {
   btn.addEventListener('click', async () => {
-    if (!confirm('Delete this enquiry?')) return;
+    if (!confirm('Delete this enquiry? This cannot be undone.')) return;
     const id = (btn as HTMLElement).dataset.id;
-    const r = await fetch(`http://localhost:8000/api/enquiries/${id}`, { method: 'DELETE', credentials: 'include' });
-    if (r.ok) window.location.reload(); else alert('Failed');
+    try {
+      const r = await fetch('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ method: 'DELETE', path: `/api/enquiries/${id}` }),
+      });
+      if (r.ok || r.status === 204) window.location.reload();
+      else alert('Failed to delete enquiry.');
+    } catch { alert('Network error.'); }
   });
 });
 </script>

@@ -76,19 +76,36 @@ if (Astro.url.searchParams.get('success')==='1') success='Action completed!';
 document.getElementById('upload-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const file = (document.getElementById('resume-file') as HTMLInputElement).files?.[0];
-  if (!file) return;
+  if (!file) { alert('Please select a PDF file first.'); return; }
   const btn = document.getElementById('upload-btn') as HTMLButtonElement;
   const status = document.getElementById('upload-status')!;
   btn.disabled = true; btn.textContent = 'Uploading...';
+  status.textContent = '';
+
   const fd = new FormData();
   fd.append('file', file);
-  fd.append('label', (document.getElementById('resume-label') as HTMLInputElement).value);
+  fd.append('label', (document.getElementById('resume-label') as HTMLInputElement).value || '');
   fd.append('activate', String((document.getElementById('resume-activate') as HTMLInputElement).checked));
+
   try {
-    const r = await fetch('http://localhost:8000/api/resume/upload', { method:'POST', credentials:'include', body:fd });
-    if (r.ok) { status.textContent='✓ Uploaded!'; status.style.color='#4ADE80'; setTimeout(()=>window.location.reload(),1000); }
-    else { const d = await r.json(); status.textContent = d.detail||'Upload failed'; status.style.color='#F87171'; }
-  } catch { status.textContent='Network error'; status.style.color='#F87171'; }
-  finally { btn.disabled=false; btn.textContent='Upload Resume'; }
+    // POST to the Astro SSR proxy — it forwards with the session cookie server-side,
+    // avoiding the cross-origin cookie restriction between ports 4322 and 8000.
+    const r = await fetch('/api/upload-resume', { method: 'POST', body: fd });
+    const d = await r.json();
+    if (r.ok) {
+      status.textContent = '✓ Resume uploaded successfully!';
+      status.style.color = '#4ADE80';
+      setTimeout(() => window.location.reload(), 1200);
+    } else {
+      status.textContent = d.detail || 'Upload failed. Please try again.';
+      status.style.color = '#F87171';
+    }
+  } catch (err) {
+    status.textContent = 'Network error — make sure all services are running.';
+    status.style.color = '#F87171';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Upload Resume';
+  }
 });
 </script>

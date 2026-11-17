@@ -23,14 +23,33 @@ const nav = [
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>{title} — Portfolio Admin</title>
 <meta name="robots" content="noindex, nofollow"/>
 </head>
 <body>
+
+<!-- Mobile header (only visible on small screens) -->
+<header class="admin-mobile-header" id="mobile-header">
+  <div class="admin-mobile-logo">
+    <span class="admin-mobile-logo-mark">◆</span>
+    Portfolio Admin
+  </div>
+  <button class="admin-hamburger" id="mobile-menu-btn" aria-label="Open menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<!-- Overlay backdrop for mobile sidebar -->
+<div class="admin-sidebar-overlay" id="sidebar-overlay"></div>
+
 <div class="admin-layout">
-  <aside class="admin-sidebar">
-    <div class="sidebar-logo"><a href="/admin"><span class="sidebar-logo-mark">◆</span> Portfolio Admin</a></div>
+  <!-- Sidebar -->
+  <aside class="admin-sidebar" id="admin-sidebar" aria-label="Admin navigation">
+    <div class="sidebar-logo">
+      <a href="/admin"><span class="sidebar-logo-mark">◆</span> Portfolio Admin</a>
+    </div>
     <nav class="sidebar-nav">
       <div class="sidebar-section-label">Overview</div>
       {nav.slice(0,2).map(item => (
@@ -55,14 +74,56 @@ const nav = [
         </a>
       ))}
       <form action="/admin/logout" method="POST" style="margin:0;padding:0">
-        <button type="submit" class="sidebar-link" style="width:100%;background:none;border:none;text-align:left;cursor:pointer;color:#A9A1B1;font-size:14px;font-weight:500">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <button type="submit" class="sidebar-link" style="width:100%;background:none;border:none;text-align:left;cursor:pointer;color:#A9A1B1;font-size:14px;font-weight:500;display:flex;align-items:center;gap:.75rem">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           Logout
         </button>
       </form>
     </nav>
   </aside>
-  <main class="admin-main"><slot /></main>
+
+  <!-- Main content area -->
+  <main class="admin-main">
+    <slot />
+  </main>
 </div>
+
+<script>
+  // Mobile sidebar toggle
+  const btn = document.getElementById('mobile-menu-btn');
+  const sidebar = document.getElementById('admin-sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+
+  function openSidebar() {
+    sidebar?.classList.add('mobile-open');
+    overlay?.classList.add('open');
+    btn?.classList.add('open');
+    btn?.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSidebar() {
+    sidebar?.classList.remove('mobile-open');
+    overlay?.classList.remove('open');
+    btn?.classList.remove('open');
+    btn?.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+
+  btn?.addEventListener('click', () => {
+    const isOpen = sidebar?.classList.contains('mobile-open');
+    isOpen ? closeSidebar() : openSidebar();
+  });
+
+  overlay?.addEventListener('click', closeSidebar);
+
+  // Close sidebar when a nav link is clicked on mobile
+  sidebar?.querySelectorAll('a, button[type="submit"]').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) closeSidebar();
+    });
+  });
+</script>
+
 </body>
 </html>

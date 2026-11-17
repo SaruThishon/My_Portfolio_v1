@@ -75,18 +75,26 @@ try {
 </AdminLayout>
 
 <script>
+// All browser-side API calls go through /api/proxy to avoid cross-origin cookie issues
+async function proxyCall(method: string, path: string, body?: unknown) {
+  const r = await fetch('/api/proxy', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ method, path, body }),
+  });
+  return r;
+}
+
 document.querySelectorAll('.toggle-status-btn').forEach(btn => {
   btn.addEventListener('click', async () => {
     const id = (btn as HTMLElement).dataset.id;
     const currentStatus = (btn as HTMLElement).dataset.status;
     const newStatus = currentStatus === 'published' ? 'draft' : 'published';
-    const res = await fetch(`http://localhost:8000/api/projects/${id}/status`, {
-      method: 'PATCH', credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: newStatus }),
-    });
-    if (res.ok) window.location.reload();
-    else alert('Failed to update status');
+    try {
+      const res = await proxyCall('PATCH', `/api/projects/${id}/status`, { status: newStatus });
+      if (res.ok) window.location.reload();
+      else alert('Failed to update status');
+    } catch { alert('Network error'); }
   });
 });
 
@@ -95,11 +103,11 @@ document.querySelectorAll('.delete-btn').forEach(btn => {
     const id = (btn as HTMLElement).dataset.id;
     const title = (btn as HTMLElement).dataset.title;
     if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
-    const res = await fetch(`http://localhost:8000/api/projects/${id}`, {
-      method: 'DELETE', credentials: 'include',
-    });
-    if (res.ok) window.location.reload();
-    else alert('Failed to delete project');
+    try {
+      const res = await proxyCall('DELETE', `/api/projects/${id}`);
+      if (res.ok || res.status === 204) window.location.reload();
+      else alert('Failed to delete project');
+    } catch { alert('Network error'); }
   });
 });
 </script>
