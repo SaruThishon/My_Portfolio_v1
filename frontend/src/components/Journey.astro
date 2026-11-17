@@ -1,8 +1,9 @@
 ---
 interface Education { id:string;institution:string;degree:string;field_of_study?:string;start_date?:string;end_date?:string;is_current:boolean;description?:string;grade?:string; }
 interface Experience { id:string;organization:string;position:string;employment_type:string;start_date?:string;end_date?:string;is_current:boolean;description?:string;technologies:string[]; }
-interface Props { education?: Education[]; experience?: Experience[]; }
-const { education=[], experience=[] } = Astro.props;
+interface Certification { id:string;name:string;issuer:string;issue_date?:string;credential_url?:string;description?:string; }
+interface Props { education?: Education[]; experience?: Experience[]; certifications?: Certification[]; }
+const { education=[], experience=[], certifications=[] } = Astro.props;
 function fmt(d?:string){ if(!d) return ''; const dt=new Date(d); return dt.toLocaleDateString('en-US',{year:'numeric',month:'short'}); }
 ---
 <section class="journey section" id="journey">
@@ -55,14 +56,44 @@ function fmt(d?:string){ if(!d) return ''; const dt=new Date(d); return dt.toLoc
         </div>
       </div>
     </div>
+
+    <!-- Certifications — shown below Education & Experience when available -->
+    {certifications.length > 0 && (
+      <div class="certs-section reveal" style="transition-delay:.2s">
+        <h3 class="certs-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+          Certifications
+        </h3>
+        <div class="certs-grid">
+          {certifications.map(cert => (
+            <div class="cert-card">
+              <div class="cert-card__top">
+                <div class="cert-card__dot" aria-hidden="true"></div>
+                {cert.issue_date && <span class="cert-card__date">{fmt(cert.issue_date)}</span>}
+              </div>
+              <h4 class="cert-card__name">{cert.name}</h4>
+              <p class="cert-card__issuer">{cert.issuer}</p>
+              {cert.description && <p class="cert-card__desc">{cert.description}</p>}
+              {cert.credential_url && (
+                <a href={cert.credential_url} target="_blank" rel="noopener noreferrer" class="cert-card__link">
+                  View credential
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
   </div>
 </section>
 
 <style>
-.journey__header{margin-bottom:3rem}.journey__heading{font-size:var(--text-5xl);margin-block:1rem}
-.journey__grid{display:grid;grid-template-columns:1fr 1fr;gap:4rem}
-@media(max-width:768px){.journey__grid{grid-template-columns:1fr;gap:3rem}}
-.journey__col-title{font-size:var(--text-sm);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-muted);margin-bottom:2rem}
+.journey__header{margin-bottom:3rem}
+.journey__heading{font-size:var(--text-5xl);margin-block:1rem}
+.journey__grid{display:grid;grid-template-columns:1fr 1fr;gap:4rem;margin-bottom:3.5rem}
+@media(max-width:768px){.journey__grid{grid-template-columns:1fr;gap:3rem;margin-bottom:2.5rem}}
+.journey__col-title{display:flex;align-items:center;gap:.5rem;font-size:var(--text-xs);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-muted);margin-bottom:2rem}
 .timeline{position:relative}
 .timeline::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:1px;background:var(--color-border)}
 .timeline__item{display:flex;gap:1.5rem;padding-bottom:2rem}
@@ -72,8 +103,22 @@ function fmt(d?:string){ if(!d) return ''; const dt=new Date(d); return dt.toLoc
 .timeline__current{color:var(--color-accent-primary)}
 .timeline__title{font-size:var(--text-base);font-weight:600;color:var(--color-text-primary);margin-bottom:.25rem}
 .timeline__org{font-size:var(--text-sm);color:var(--color-accent-primary);font-weight:500;margin-bottom:.25rem}
-.timeline__sub{font-size:var(--text-xs);color:var(--color-text-muted);margin-bottom:.25rem}
+.timeline__sub{font-size:var(--text-xs);color:var(--color-text-muted);margin-bottom:.25rem;text-transform:capitalize}
 .timeline__desc{font-size:var(--text-sm);color:var(--color-text-secondary);line-height:1.7;margin-top:.5rem}
 .timeline__tech{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.75rem}
 .timeline__empty{padding:2rem;border:1px dashed var(--color-border);border-radius:var(--radius-lg);color:var(--color-text-muted);font-size:var(--text-sm)}
+/* Certifications */
+.certs-section{border-top:1px solid var(--color-border);padding-top:3rem}
+.certs-title{display:flex;align-items:center;gap:.5rem;font-size:var(--text-xs);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-muted);margin-bottom:1.5rem}
+.certs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem}
+.cert-card{background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;transition:border-color var(--transition-normal),transform var(--transition-normal)}
+.cert-card:hover{border-color:rgba(183,148,246,.4);transform:translateY(-3px)}
+.cert-card__top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem}
+.cert-card__dot{width:7px;height:7px;border-radius:50%;background:var(--color-accent-primary);box-shadow:0 0 0 3px rgba(183,148,246,.15)}
+.cert-card__date{font-size:.7rem;font-weight:500;color:var(--color-text-muted);letter-spacing:.05em}
+.cert-card__name{font-size:var(--text-sm);font-weight:700;color:var(--color-text-primary);margin-bottom:.3rem;line-height:1.3}
+.cert-card__issuer{font-size:var(--text-xs);color:var(--color-accent-primary);font-weight:500;margin-bottom:.4rem}
+.cert-card__desc{font-size:var(--text-xs);color:var(--color-text-secondary);line-height:1.6;margin-top:.4rem}
+.cert-card__link{display:inline-flex;align-items:center;gap:.3rem;margin-top:.75rem;font-size:var(--text-xs);font-weight:500;color:var(--color-text-muted);transition:color var(--transition-fast)}
+.cert-card__link:hover{color:var(--color-accent-primary)}
 </style>

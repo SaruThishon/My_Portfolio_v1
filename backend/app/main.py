@@ -99,7 +99,23 @@ async def health():
 
 
 # Serve local uploads in development
+# StaticFiles bypasses CORS middleware, so we add an explicit CORS middleware
+# specifically for the /uploads path so browsers can fetch files cross-origin.
 if settings.STORAGE_PROVIDER == "local":
     uploads_dir = Path(__file__).parent.parent / "uploads"
     uploads_dir.mkdir(parents=True, exist_ok=True)
+
+    from starlette.middleware.base import BaseHTTPMiddleware
+    class UploadsCORSMiddleware(BaseHTTPMiddleware):
+        async def dispatch(self, request, call_next):
+            response = await call_next(request)
+            if request.url.path.startswith("/uploads/"):
+                origin = request.headers.get("origin", "")
+                if origin in settings.allowed_origins_list:
+                    response.headers["Access-Control-Allow-Origin"] = origin
+                    response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+                    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+            return response
+
+    app.add_middleware(UploadsCORSMiddleware)
     app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")

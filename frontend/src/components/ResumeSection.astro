@@ -22,10 +22,17 @@ const { resumeUrl, updatedAt } = Astro.props;
       <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center">
         {resumeUrl ? (
           <>
-            <a href={resumeUrl} download class="btn btn--primary">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Download Resume
-            </a>
+            {/* Download button — uses JS fetch + blob URL to force download cross-origin */}
+            <button
+              class="btn btn--primary"
+              id="resume-download-btn"
+              data-url={resumeUrl}
+              data-filename="resume.pdf"
+              aria-label="Download resume PDF"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span id="resume-download-text">Download Resume</span>
+            </button>
             <a href={resumeUrl} target="_blank" rel="noopener noreferrer" class="btn btn--ghost">View PDF ↗</a>
           </>
         ) : (
@@ -44,3 +51,44 @@ const { resumeUrl, updatedAt } = Astro.props;
 .btn--ghost{background:transparent;color:var(--color-text-primary);border-color:var(--color-border)}
 .btn--ghost:hover{border-color:var(--color-accent-primary);color:var(--color-accent-primary)}
 </style>
+
+<script>
+  // Force a real file download for cross-origin PDFs.
+  // The HTML `download` attribute is ignored by browsers for cross-origin URLs,
+  // so we fetch the file as a blob and trigger the download programmatically.
+  const btn = document.getElementById('resume-download-btn') as HTMLButtonElement | null;
+  if (btn) {
+    btn.addEventListener('click', async () => {
+      const url = btn.dataset.url!;
+      const filename = btn.dataset.filename || 'resume.pdf';
+      const label = document.getElementById('resume-download-text');
+
+      btn.disabled = true;
+      if (label) label.textContent = 'Downloading...';
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Failed to fetch resume');
+        const blob = await res.blob();
+        const objectUrl = URL.createObjectURL(blob);
+
+        // Create a temporary <a> and click it to trigger the Save dialog
+        const a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        // Clean up the object URL after a short delay
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
+      } catch {
+        // Fall back to opening in a new tab if the fetch fails
+        window.open(url, '_blank');
+      } finally {
+        btn.disabled = false;
+        if (label) label.textContent = 'Download Resume';
+      }
+    });
+  }
+</script>

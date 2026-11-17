@@ -14,6 +14,8 @@ if (form) {
 
     const data: Record<string, string> = {};
     new FormData(form).forEach((v, k) => { data[k] = String(v); });
+    // enquiry_type field removed from UI — default to 'general' for the backend
+    data['enquiry_type'] = 'general';
 
     submitBtn.disabled = true;
     submitText.style.display = 'none';
