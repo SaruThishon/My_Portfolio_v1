@@ -24,7 +24,7 @@ const {
           <span class="text-gradient">engineering answers.</span>
         </h2>
         <div class="about__decorative" aria-hidden="true">
-          <div class="about__line"></div>
+          <span class="about__line draw-line"></span>
           <div class="about__dot"></div>
         </div>
       </div>
@@ -54,20 +54,20 @@ const {
       </div>
     </div>
 
-    <!-- Philosophy cards -->
-    <div class="about__values reveal delay-1">
-      <div class="about__value-card">
-        <div class="about__value-number">01</div>
+    <!-- Philosophy cards with stagger entrance -->
+    <div class="about__values" data-stagger>
+      <div class="about__value-card glow-pulse">
+        <div class="about__value-number" data-count="1">01</div>
         <h3 class="about__value-title">Curiosity First</h3>
         <p class="about__value-text">Every good solution starts with the right question. I approach problems with genuine curiosity before writing a single line of code.</p>
       </div>
-      <div class="about__value-card">
-        <div class="about__value-number">02</div>
+      <div class="about__value-card glow-pulse">
+        <div class="about__value-number" data-count="2">02</div>
         <h3 class="about__value-title">Build to Learn</h3>
         <p class="about__value-text">Theory makes sense in practice. I learn best by building — breaking things, understanding why, and building them better the next time.</p>
       </div>
-      <div class="about__value-card">
-        <div class="about__value-number">03</div>
+      <div class="about__value-card glow-pulse">
+        <div class="about__value-number" data-count="3">03</div>
         <h3 class="about__value-title">Data-Informed</h3>
         <p class="about__value-text">Good decisions are grounded in data. I bring an analytical perspective to everything — from debugging code to evaluating design choices.</p>
       </div>

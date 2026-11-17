@@ -28,7 +28,8 @@ const defaultSkills = [
         Object.entries(grouped).map(([category, categorySkills]) => (
           <div class="skills__group reveal">
             <h3 class="skills__group-title">{category}</h3>
-            <div class="skills__tags">
+            {/* data-stagger triggers wave entrance on the pill children */}
+            <div class="skills__tags" data-stagger>
               {categorySkills.map(skill => (
                 <div class="skill-pill">
                   <span class="skill-pill__name">{skill.name}</span>
@@ -42,7 +43,7 @@ const defaultSkills = [
         defaultSkills.map((group, i) => (
           <div class={`skills__group reveal delay-${i+1}`}>
             <h3 class="skills__group-title">{group.category}</h3>
-            <div class="skills__tags">
+            <div class="skills__tags" data-stagger>
               {group.items.map(item => (
                 <div class="skill-pill"><span class="skill-pill__name">{item}</span></div>
               ))}

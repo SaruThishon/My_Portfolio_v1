@@ -65,6 +65,10 @@ const pageUrl = canonical || `${siteUrl}${Astro.url.pathname}`;
   <!-- Noise texture overlay -->
   <div class="noise-overlay" aria-hidden="true"></div>
 
+  <!-- Ambient floating orbs (subtle parallax on scroll) -->
+  <div class="ambient-orb ambient-orb--1" aria-hidden="true" data-float="0.04"></div>
+  <div class="ambient-orb ambient-orb--2" aria-hidden="true" data-float="0.07"></div>
+
   <!-- Custom cursor (fine pointer only) -->
   <CustomCursor />
 

@@ -30,12 +30,25 @@ if (isFinePointer && !isReducedMotion) {
     dot.style.transform = `translate(${mouseX}px, ${mouseY}px) translate(-50%, -50%)`;
   });
 
-  const INTERACTIVE_SELECTORS = 'a, button, [role="button"], input, textarea, select, .project-card, label';
+  const INTERACTIVE_SELECTORS = 'a, button, [role="button"], input, textarea, select, .pj-card, label';
+
+  // Cursor label for project cards
+  const label = document.createElement('span');
+  label.id = 'cursor-label';
+  label.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(label);
 
   document.addEventListener('mouseover', (e) => {
-    isHoveringInteractive = !!(e.target as Element).closest(INTERACTIVE_SELECTORS);
+    const target = e.target as Element;
+    isHoveringInteractive = !!target.closest(INTERACTIVE_SELECTORS);
     ring.classList.toggle('is-hovering', isHoveringInteractive);
     dot.classList.toggle('is-hovering', isHoveringInteractive);
+
+    // Show "VIEW" label when over project card
+    const isCard = !!target.closest('.pj-card');
+    label.textContent = isCard ? 'VIEW' : '';
+    label.classList.toggle('is-visible', isCard);
+    ring.classList.toggle('is-on-card', isCard);
   });
 
   document.addEventListener('mouseleave', () => {
@@ -53,6 +66,9 @@ if (isFinePointer && !isReducedMotion) {
     ringX = lerp(ringX, mouseX, 0.12);
     ringY = lerp(ringY, mouseY, 0.12);
     ring.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
+    // Sync label position with ring
+    const labelEl = document.getElementById('cursor-label');
+    if (labelEl) labelEl.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
@@ -79,6 +95,22 @@ if (isFinePointer && !isReducedMotion) {
     #cursor-ring.is-hovering {
       width: 52px; height: 52px; border-color: rgba(183, 148, 246, 0.9);
     }
+    #cursor-ring.is-on-card {
+      width: 72px; height: 72px;
+      border-color: rgba(183, 148, 246, 0.8);
+      background: rgba(183, 148, 246, 0.07);
+    }
+    #cursor-label {
+      position: fixed; top: 0; left: 0; z-index: 9997;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.15em;
+      text-transform: uppercase; color: #F5F0FA;
+      pointer-events: none; white-space: nowrap;
+      opacity: 0; transform: translate(-50%, -50%);
+      transition: opacity 0.2s ease;
+      /* Position will be synced with ring via transform trick */
+    }
+    #cursor-label.is-visible { opacity: 1; }
   `;
   document.head.appendChild(style);
 }

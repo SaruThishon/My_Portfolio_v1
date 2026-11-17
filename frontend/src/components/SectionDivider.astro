@@ -1,0 +1,27 @@
+---
+// Animated section divider — a line that draws left-to-right on scroll
+interface Props { label?: string; }
+const { label } = Astro.props;
+---
+<div class="sec-divider" aria-hidden="true">
+  <span class="draw-line sec-divider__line"></span>
+  {label && <span class="sec-divider__label">{label}</span>}
+</div>
+
+<style>
+.sec-divider {
+  display: flex; align-items: center; gap: 1rem;
+  padding-inline: var(--gutter);
+  max-width: var(--container-max);
+  margin-inline: auto;
+  overflow: hidden;
+}
+.sec-divider__line { flex: 1; }
+.sec-divider__label {
+  font-size: .65rem; font-weight: 500;
+  letter-spacing: .15em; text-transform: uppercase;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+</style>
