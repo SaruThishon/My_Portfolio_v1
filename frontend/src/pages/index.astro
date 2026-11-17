@@ -19,10 +19,15 @@ const description = p.hero_description || 'Personal portfolio of a Software Engi
 ---
 <BaseLayout title={title} description={description}>
   <Hero
-    name={p.full_name} title={p.professional_title} headline={p.hero_headline}
-    description={p.hero_description} isAvailable={p.is_available}
-    availabilityText={p.availability_text} githubUrl={p.github_url}
-    linkedinUrl={p.linkedin_url} email={p.email}
+    name={p.full_name}
+    title={p.professional_title}
+    description={p.hero_description}
+    profileImageUrl={p.profile_image_url}
+    location={p.location}
+    githubUrl={p.github_url}
+    linkedinUrl={p.linkedin_url}
+    email={p.email}
+    updatedAt={p.updated_at}
   />
   <About bio={p.about_bio} location={p.location} />
   <Projects projects={projects || []} />
