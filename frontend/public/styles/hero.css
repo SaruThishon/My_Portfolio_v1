@@ -38,19 +38,36 @@
 .hero__firstname{display:block;color:#F5F0FA}
 .hero__lastname{display:block;background:linear-gradient(135deg,#B794F6 0%,#A78BFA 50%,#C4A8FF 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .hero__title-wrap{
-  height:2em;
-  overflow:visible;  /* must be visible for 3D rotation not to be clipped */
-  display:flex;align-items:center;margin-top:.5rem;
-  perspective:600px;  /* 3D stage for the Y-axis rotation */
+  display:flex;align-items:center;
+  margin-top:.6rem;
+  min-height:2.2em;   /* prevents layout shift as text types */
+  overflow:hidden;
 }
 .hero__title-static{display:none}
-.hero__title-rotating{
+
+/* The span that receives typewriter characters */
+.hero__title-typing{
   font-family:'Space Grotesk',sans-serif;
   font-size:clamp(1.1rem,2.6vw,1.5rem);
-  font-weight:400;color:#A9A1B1;letter-spacing:.01em;
-  display:inline-block;
-  transform-origin:center center;
-  transform-style:preserve-3d;
-  backface-visibility:hidden;
-  -webkit-backface-visibility:hidden;
+  font-weight:400;
+  color:#A9A1B1;
+  letter-spacing:.01em;
+}
+
+/* Blinking cursor */
+.hero__title-cursor{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:clamp(1.1rem,2.6vw,1.5rem);
+  font-weight:300;
+  color:#B794F6;
+  margin-left:1px;
+  animation:blink-cursor .75s step-end infinite;
+  user-select:none;
+}
+@keyframes blink-cursor{
+  0%,100%{opacity:1}
+  50%{opacity:0}
+}
+@media(prefers-reduced-motion:reduce){
+  .hero__title-cursor{animation:none}
 }

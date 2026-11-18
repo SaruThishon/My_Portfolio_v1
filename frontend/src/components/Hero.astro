@@ -99,12 +99,11 @@ const titlesJson = JSON.stringify(titleParts);
         </h1>
       </div>
 
-      <!-- Title — rotates through comma/slash separated values -->
+      <!-- Title — typewriter effect cycles through comma/slash separated values -->
       <div class="hero__title-wrap hero__enter-2" aria-live="polite">
         <span class="hero__title-static" aria-hidden="true">{titleParts[0] || title}</span>
-        <span class="hero__title-rotating" id="hero-title-rotating" aria-label={title}>
-          {titleParts[0] || title}
-        </span>
+        <span class="hero__title-typing" id="hero-title-typing" aria-label={title}></span>
+        <span class="hero__title-cursor" aria-hidden="true">|</span>
       </div>
 
       <!-- Activity status only (location removed) -->
@@ -163,62 +162,61 @@ const titlesJson = JSON.stringify(titleParts);
 <link rel="stylesheet" href="/styles/hero2.css" />
 
 <script define:vars={{ titlesJson }}>
-  // Rotating title animation
-  // Only runs if there are multiple title parts
-  (function() {
+  // ── Typewriter effect for professional title ─────────────────────────────
+  (function () {
     var titles;
     try { titles = JSON.parse(titlesJson); } catch(e) { return; }
-    if (!titles || titles.length <= 1) return;
+    if (!titles || !titles.length) return;
 
-    var el = document.getElementById('hero-title-rotating');
+    var el     = document.getElementById('hero-title-typing');
     if (!el) return;
 
-    // Reduced-motion: show all titles joined, no animation
+    // Reduced-motion: show first title statically, no animation
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      el.textContent = titles.join(' · ');
+      el.textContent = titles[0];
       return;
     }
 
-    var current = 0;
-    var HOLD_MS = 2600;  // time each title is visible
-    var OUT_MS  = 400;   // exit (flip away) duration
-    var IN_MS   = 400;   // enter (flip in) duration
+    var CHAR_DELAY  = 65;   // ms per character typed
+    var DELETE_DELAY= 40;   // ms per character deleted (faster)
+    var HOLD_AFTER  = 2000; // ms to hold the complete word before deleting
+    var PAUSE_AFTER = 500;  // ms pause after full deletion before next word
 
-    function flipTo(index) {
-      // ── Phase 1: EXIT — rotate current title away to the right ──────────────
-      // The near (left) edge stays, far (right) edge swings back → rotateY(90deg)
-      el.style.transition =
-        'transform ' + OUT_MS + 'ms cubic-bezier(0.55, 0, 1, 0.45), ' +
-        'opacity ' + (OUT_MS * 0.6) + 'ms ease';
-      el.style.transform = 'rotateY(90deg)';
-      el.style.opacity   = '0';
+    var currentIdx  = 0;
+    var charIdx     = 0;
+    var isDeleting  = false;
+    var timer = 0;
 
-      setTimeout(function() {
-        // ── Phase 2: SNAP — change text while element is edge-on (invisible) ──
-        el.textContent = titles[index];
+    function tick() {
+      var word = titles[currentIdx];
 
-        // Start position: rotated in from the left side
-        // rotateY(-90deg) = near (left) edge is back, far (right) swings forward
-        el.style.transition = 'none';
-        el.style.transform  = 'rotateY(-90deg)';
-        el.style.opacity    = '0';
-
-        // Force browser reflow so it registers the -90deg starting state
-        void el.offsetHeight;
-
-        // ── Phase 3: ENTER — rotate the new title into the flat (0deg) position
-        el.style.transition =
-          'transform ' + IN_MS + 'ms cubic-bezier(0, 0.55, 0.45, 1), ' +
-          'opacity ' + (IN_MS * 0.5) + 'ms ease ' + (IN_MS * 0.1) + 'ms';
-        el.style.transform = 'rotateY(0deg)';
-        el.style.opacity   = '1';
-      }, OUT_MS);
+      if (!isDeleting) {
+        // Type next character
+        charIdx++;
+        el.textContent = word.slice(0, charIdx);
+        if (charIdx === word.length) {
+          // Finished typing — hold then start deleting
+          isDeleting = true;
+          timer = setTimeout(tick, HOLD_AFTER);
+          return;
+        }
+        timer = setTimeout(tick, CHAR_DELAY);
+      } else {
+        // Delete one character
+        charIdx--;
+        el.textContent = word.slice(0, charIdx);
+        if (charIdx === 0) {
+          // Finished deleting — move to next word
+          isDeleting = false;
+          currentIdx = (currentIdx + 1) % titles.length;
+          timer = setTimeout(tick, PAUSE_AFTER);
+          return;
+        }
+        timer = setTimeout(tick, DELETE_DELAY);
+      }
     }
 
-    // Kick off the cycle after the initial hold
-    setInterval(function() {
-      current = (current + 1) % titles.length;
-      flipTo(current);
-    }, HOLD_MS + OUT_MS);
+    // Small initial delay so the page entrance animations finish first
+    setTimeout(tick, 900);
   })();
 </script>

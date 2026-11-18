@@ -6,55 +6,113 @@ interface Project {
 }
 interface Props { projects?: Project[]; }
 const { projects = [] } = Astro.props;
-const cols = Math.min(projects.length, 3);
 ---
 <section class="projects section" id="projects" aria-label="Projects section">
   <div class="container">
-    <div class="projects__header reveal">
+    <div class="pj-header reveal">
       <span class="section-label">02 / PROJECTS</span>
-      <h2 class="projects__heading">Work that<br/><span class="text-gradient">speaks for itself.</span></h2>
-      <p class="projects__subtext">Projects built to solve real problems and explore interesting ideas.</p>
+      <h2 class="pj-heading">Work that<br/><span class="text-gradient">speaks for itself.</span></h2>
+      <p class="pj-subtext">Projects built to solve real problems and explore interesting ideas.</p>
     </div>
-    {projects.length === 0 ? (
-      <div class="projects__empty reveal">
+  </div>
+
+  {projects.length === 0 ? (
+    <div class="container">
+      <div class="pj-empty reveal">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 9 6 6M15 9l-6 6"/></svg>
         <h3>Projects coming soon</h3>
         <p>Check back soon — I'm building something interesting.</p>
       </div>
-    ) : (
-      <div class={`pj-grid pj-grid--${cols}`}>
-        {projects.map((p, i) => (
-          <article class={`pj-card reveal-card ${i===0?'pj-card--hero':''}`} style={`--cd:${i*0.08}s`} data-tilt>
-            <a href={`/projects/${p.slug}`} class="pj-card__link" aria-label={`View ${p.title}`}>
-              <div class="pj-card__img-wrap">
-                {p.thumbnail_url
-                  ? <img src={p.thumbnail_url} alt={p.title} class="pj-card__img" width="800" height="1000" loading={i===0?'eager':'lazy'} />
-                  : <div class="pj-card__ph" aria-hidden="true"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="m21 15-5-5L5 21"/><circle cx="8.5" cy="8.5" r="1.5"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
-                }
-                <div class="pj-card__grad" aria-hidden="true"></div>
-              </div>
+    </div>
+  ) : (
+    <>
+      {/* Carousel — full viewport width for edge-to-edge scroll */}
+      <div class="pj-carousel-wrap" aria-label="Project cards carousel">
+        <div class="pj-carousel" id="pj-carousel" role="list">
+          {projects.map((p, i) => (
+            <article
+              class={`pj-card reveal-card ${p.is_featured ? 'pj-card--featured' : ''}`}
+              style={`--cd:${i * 0.07}s`}
+              data-index={i}
+              role="listitem"
+            >
+              {/* Background image — decorative, low opacity */}
+              {p.thumbnail_url && (
+                <div class="pj-card__bg" aria-hidden="true">
+                  <img src={p.thumbnail_url} alt="" class="pj-card__bg-img" width="600" height="400" loading="lazy" />
+                  <div class="pj-card__bg-overlay" aria-hidden="true"></div>
+                </div>
+              )}
+              {!p.thumbnail_url && <div class="pj-card__bg-empty" aria-hidden="true"></div>}
+
+              {/* Primary content — text first */}
+              <a href={`/projects/${p.slug}`} class="pj-card__inner" aria-label={`View ${p.title}`}>
+                <div class="pj-card__top">
+                  <div class="pj-card__meta">
+                    <span class="pj-card__cat">{p.category}</span>
+                    {p.is_featured && <span class="pj-card__badge">Featured</span>}
+                  </div>
+                  <div class="pj-card__num">0{i + 1}</div>
+                </div>
+
+                <div class="pj-card__body">
+                  <h3 class="pj-card__title">{p.title}</h3>
+                  <p class="pj-card__desc">{p.short_description}</p>
+                </div>
+
+                <div class="pj-card__bottom">
+                  <div class="pj-card__tags">
+                    {p.technologies.slice(0, 4).map(t => (
+                      <span class="pj-card__tag">{t}</span>
+                    ))}
+                    {p.technologies.length > 4 && (
+                      <span class="pj-card__tag">+{p.technologies.length - 4}</span>
+                    )}
+                  </div>
+                  <div class="pj-card__arrow" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  </div>
+                </div>
+              </a>
+
+              {/* Corner bracket accent */}
               <div class="pj-card__br pj-card__br--tl" aria-hidden="true"></div>
               <div class="pj-card__br pj-card__br--br" aria-hidden="true"></div>
-              <div class="pj-card__glass">
-                <div class="pj-card__meta">
-                  <span class="pj-card__cat">{p.category}</span>
-                  {p.is_featured && <span class="pj-card__badge">Featured</span>}
-                </div>
-                <h3 class="pj-card__title">{p.title}</h3>
-                <p class="pj-card__desc">{p.short_description}</p>
-                <div class="pj-card__tags">
-                  {p.technologies.slice(0,4).map(t => <span class="pj-card__tag">{t}</span>)}
-                  {p.technologies.length>4 && <span class="pj-card__tag">+{p.technologies.length-4}</span>}
-                </div>
-                <div class="pj-card__cta"><span>View Project</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
-              </div>
-            </a>
-          </article>
-        ))}
+            </article>
+          ))}
+        </div>
+
+        {/* Scroll fade edges */}
+        <div class="pj-carousel__fade pj-carousel__fade--l" aria-hidden="true"></div>
+        <div class="pj-carousel__fade pj-carousel__fade--r" aria-hidden="true"></div>
       </div>
-    )}
-    <div class="projects__footer reveal"><a href="/projects" class="pj-btn">View all projects →</a></div>
-  </div>
+
+      {/* Pagination dots + nav arrows */}
+      <div class="container">
+        <div class="pj-controls reveal">
+          <button class="pj-nav-btn" id="pj-prev" aria-label="Previous project">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          </button>
+          <div class="pj-dots" id="pj-dots" role="tablist" aria-label="Project navigation">
+            {projects.map((_, i) => (
+              <button
+                class={`pj-dot ${i === 0 ? 'pj-dot--active' : ''}`}
+                data-idx={i}
+                role="tab"
+                aria-label={`Project ${i + 1}`}
+                aria-selected={i === 0}
+              ></button>
+            ))}
+          </div>
+          <button class="pj-nav-btn" id="pj-next" aria-label="Next project">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+          <a href="/projects" class="pj-view-all">View all →</a>
+        </div>
+      </div>
+    </>
+  )}
 </section>
 <link rel="stylesheet" href="/styles/projects.css" />
+<link rel="stylesheet" href="/styles/projects2.css" />
 <script src="../scripts/projects.ts"></script>
