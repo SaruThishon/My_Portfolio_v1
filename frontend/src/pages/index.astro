@@ -15,7 +15,7 @@ const [profile, projects, skills, education, experience, certifications, resume]
 ]);
 
 const p = profile || {};
-const title = `${p.full_name || 'Portfolio'} — ${p.professional_title || 'Software Engineer'}`;
+const title = `${p.full_name || 'Portfolio'}`;
 const description = p.hero_description || 'Personal portfolio of a Software Engineer specializing in Python, SQL, and Data Science.';
 ---
 <BaseLayout title={title} description={description} twitterUrl={p.twitter_url} instagramUrl={(p.extra_social_links as any)?.instagram}>
