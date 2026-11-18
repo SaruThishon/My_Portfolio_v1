@@ -16,7 +16,8 @@
 }
 
 /* ── Sticky stage ───────────────────────────────────── */
-/* Stays in view for the entire scroll track */
+/* Stays in view for the entire scroll track.
+   NO overflow:hidden — that flattens CSS 3D transforms! */
 .pj-stage{
   position:sticky;
   top:0;
@@ -25,7 +26,6 @@
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  overflow:hidden;
 }
 
 /* ── 3D ring wrapper ────────────────────────────────── */
@@ -40,40 +40,49 @@
   justify-content:center;
 }
 
-/* The ring itself — rotateY is driven by scroll via JS */
+/* The ring itself — rotateY is driven by scroll via JS lerp.
+   NO CSS transition here — that fights the JS lerp. */
 .pj-ring{
   position:relative;
-  /* card size fed back as CSS var */
-  width:var(--card-w,340px);
-  height:var(--card-h,460px);
+  width:var(--card-w,280px);
+  height:var(--card-h,380px);
   transform-style:preserve-3d;
-  /* smooth lerp handled in JS; CSS transition catches hover-pause release */
-  transition:transform 0.1s linear;
 }
 
 /* ── Individual card position in the ring ───────────── */
+/* Hover tilt uses CSS vars --hover-rx/ry/sc so JS never overwrites the full transform */
 .pj-card{
   position:absolute;
   inset:0;
   border-radius:20px;
-  /* Each card is rotated to its slot then pushed out along Z */
+  /* Ring position + hover tilt in one transform chain */
   transform:
     rotateY(calc(360deg / var(--n,1) * var(--i,0)))
-    translateZ(var(--tz,320px));
+    translateZ(var(--tz,220px))
+    rotateX(var(--hover-rx,0deg))
+    rotateY(var(--hover-ry,0deg))
+    scale(var(--hover-sc,1));
   transform-style:preserve-3d;
-  /* Card face tilt driven by --rx,--ry CSS vars set on mousemove */
-  transition:box-shadow .4s ease, border-color .4s ease, filter .3s ease;
+  transition:
+    --hover-rx .4s cubic-bezier(.16,1,.3,1),
+    --hover-ry .4s cubic-bezier(.16,1,.3,1),
+    --hover-sc .4s cubic-bezier(.16,1,.3,1),
+    box-shadow .4s ease,
+    border-color .4s ease,
+    filter .3s ease;
   cursor:pointer;
-  /* Base appearance */
   background:linear-gradient(145deg, #1e1a27 0%, #17141e 100%);
   border:1px solid rgba(53,48,61,.9);
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,.04),
     0 8px 32px rgba(0,0,0,.5);
   overflow:hidden;
-  /* backface-visibility: hidden prevents seeing the back of far cards */
   backface-visibility:hidden;
   -webkit-backface-visibility:hidden;
+  /* Default hover vars */
+  --hover-rx:0deg;
+  --hover-ry:0deg;
+  --hover-sc:1;
 }
 
 /* Active (front-facing) card — extra glow */

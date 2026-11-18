@@ -13,7 +13,8 @@
 /* ── Top row ─────────────────────────────────────────── */
 .pj-card__top{
   display:flex;align-items:center;gap:.5rem;
-  margin-bottom:auto;
+  /* NO margin-bottom:auto — that creates an empty gap in the middle */
+  margin-bottom:0;
 }
 .pj-card__cat{
   font-size:.68rem;font-weight:600;letter-spacing:.12em;
@@ -37,8 +38,8 @@
 
 /* ── Body ────────────────────────────────────────────── */
 .pj-card__body{
-  flex:1;display:flex;flex-direction:column;justify-content:flex-end;
-  padding-block:.75rem;
+  flex:1;display:flex;flex-direction:column;justify-content:flex-start;
+  padding-top:.875rem;
 }
 .pj-card__title{
   font-family:'Space Grotesk',sans-serif;
@@ -54,10 +55,10 @@
   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
 }
 
-/* ── Bottom ──────────────────────────────────────────── */
+/* ── Bottom — pushed to card bottom with margin-top:auto ── */
 .pj-card__bottom{
   display:flex;align-items:flex-end;justify-content:space-between;
-  margin-top:.875rem;gap:.5rem;
+  margin-top:auto;padding-top:.75rem;gap:.5rem;
 }
 .pj-card__tags{display:flex;flex-wrap:wrap;gap:.3rem;flex:1}
 .pj-card__tag{
