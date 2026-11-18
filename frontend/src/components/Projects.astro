@@ -8,7 +8,7 @@ interface Props { projects?: Project[]; }
 const { projects = [] } = Astro.props;
 // Cap ring to 6 cards max — more than 6 makes the ring too wide and scroll too long.
 // Extra projects are accessible via the /projects page.
-const RING_MAX = 6;
+const RING_MAX = 8; // show up to 8 in the ring
 const ringProjects = projects.slice(0, RING_MAX);
 const N = ringProjects.length;
 ---
@@ -53,7 +53,7 @@ const N = ringProjects.length;
                 <div class="pj-card__top">
                   <span class="pj-card__cat">{p.category}</span>
                   {p.is_featured && <span class="pj-card__badge">Featured</span>}
-                  <span class="pj-card__num">0{i + 1}</span>
+
                 </div>
                 <div class="pj-card__body">
                   <h3 class="pj-card__title">{p.title}</h3>
@@ -79,7 +79,7 @@ const N = ringProjects.length;
             <div class="pj-mob-card__top">
               <span class="pj-mob-card__cat">{p.category}</span>
               {p.is_featured && <span class="pj-mob-card__badge">Featured</span>}
-              <span class="pj-mob-card__num">0{i + 1}</span>
+
             </div>
             <h3 class="pj-mob-card__title">{p.title}</h3>
             <p class="pj-mob-card__desc">{p.short_description}</p>

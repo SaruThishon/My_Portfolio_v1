@@ -14,8 +14,8 @@
   const noAnim = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (N === 0) return;
 
-  const CARD_W = 220;
-  const CARD_H = 300;
+  const CARD_W = 300;
+  const CARD_H = 400;
   const STEP   = N > 1 ? 360 / N : 0;
   const TZ     = N > 1 ? Math.max(160, Math.round((CARD_W/2)/Math.tan(Math.PI/N))) : 0;
 
