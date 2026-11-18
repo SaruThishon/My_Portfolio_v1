@@ -36,9 +36,9 @@
 /* Two-column layout: portrait left, content right */
 .hero__container--with-image{
   display:grid;
-  /* Portrait gets ~45% of viewport, content gets the rest */
-  grid-template-columns:45vw 1fr;
-  align-items:stretch; /* both columns same height */
+  /* Portrait: ~32% of viewport — visible but not dominating */
+  grid-template-columns:32vw 1fr;
+  align-items:stretch;
   padding-inline:0;
   gap:0;
 }
