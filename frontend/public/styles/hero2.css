@@ -37,23 +37,88 @@
   .hero__name-display{font-size:clamp(3rem,7vw,5.5rem)}
 }
 @media(max-width:860px){
+  /* Tablet: stack portrait above content, centred */
   .hero__container--with-image{
     grid-template-columns:1fr;
     grid-template-rows:auto auto;
-    padding-inline:clamp(1.25rem,5vw,2.5rem); /* restore normal padding when stacked */
+    padding-inline:clamp(1.25rem,5vw,2.5rem);
   }
   .hero__container--with-image .hero__content{
-    padding-inline:0; /* reset — container padding handles it */
+    padding-inline:0;
   }
-  .hero__portrait-col{min-height:260px;max-width:300px;margin-inline:auto;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 10%,black 90%,transparent 100%),linear-gradient(to right,transparent 0%,black 8%,black 92%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0%,black 10%,black 90%,transparent 100%),linear-gradient(to right,transparent 0%,black 8%,black 92%,transparent 100%)}
+  .hero__portrait-col{
+    min-height:260px;max-width:300px;margin-inline:auto;
+    -webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 10%,black 90%,transparent 100%),linear-gradient(to right,transparent 0%,black 8%,black 92%,transparent 100%);
+    mask-image:linear-gradient(to bottom,transparent 0%,black 10%,black 90%,transparent 100%),linear-gradient(to right,transparent 0%,black 8%,black 92%,transparent 100%)
+  }
   .hero__portrait-img{max-height:280px}
   .hero__description{max-width:100%}
   .hero__name-display{font-size:clamp(3rem,10vw,5rem)}
 }
-@media(max-width:480px){
-  .hero__name-display{font-size:clamp(2.8rem,13vw,4rem)}
-  .hero__actions{gap:.75rem}
-  .btn{padding:.6em 1.2em;font-size:.875rem}
-  .hero__portrait-col{max-width:220px;min-height:220px}
-  .hero__portrait-img{max-height:220px}
+
+/* ── Mobile: portrait fills top, content overlays at bottom ── */
+@media(max-width:600px){
+  /* Remove top padding — portrait goes edge-to-edge from nav */
+  .hero{
+    padding-top:0;
+    justify-content:flex-end;
+    min-height:100svh;
+  }
+
+  /* Portrait becomes full-width background covering nav-to-midscreen */
+  .hero__container--with-image{
+    display:block;         /* exit grid — portrait is absolute, content is normal flow */
+    padding-inline:0;
+    padding-block:0;
+    position:relative;
+    min-height:100svh;
+  }
+  .hero__container--with-image .hero__content{
+    padding-inline:0;
+  }
+
+  /* Portrait: absolute, fills from very top (behind nav) down ~75% of screen */
+  .hero__portrait-col{
+    position:absolute;
+    top:0; left:0; right:0;
+    height:72vh;             /* tall coverage from top */
+    min-height:unset;
+    max-width:100%;
+    margin-inline:0;
+    /* Fade only at the bottom so image blends into content area */
+    -webkit-mask-image:linear-gradient(to bottom,black 0%,black 55%,transparent 100%);
+    mask-image:linear-gradient(to bottom,black 0%,black 55%,transparent 100%);
+  }
+
+  /* Image fills the portrait column */
+  .hero__portrait-img-wrap{
+    position:absolute;inset:0;
+    justify-content:center;
+    padding-right:0;
+    align-items:flex-start;
+  }
+  .hero__portrait-img{
+    width:100%;
+    height:100%;
+    max-height:none;
+    object-fit:cover;
+    object-position:top center;
+  }
+
+  /* Content: sits below, z-index above portrait */
+  .hero__content{
+    position:relative;
+    z-index:2;
+    padding:1.5rem clamp(1rem,5vw,1.5rem) 2.5rem;
+    /* Offset so it starts below the portrait gradient fade */
+    margin-top:50vh;
+    max-width:100% !important;
+  }
+
+  .hero__name-display{font-size:clamp(2.8rem,13vw,4.2rem)}
+  .hero__description{max-width:100%;font-size:.95rem}
+  .hero__actions{gap:.625rem;margin-top:1.25rem}
+  .btn{padding:.6em 1.1em;font-size:.875rem}
+  .hero__meta{margin-top:.6rem}
+  .hero__social{margin-top:1.1rem;gap:1rem}
 }
