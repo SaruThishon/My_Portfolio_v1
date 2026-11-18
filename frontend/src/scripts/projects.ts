@@ -43,7 +43,9 @@
     cards.forEach((c,i) => {
       c.classList.toggle('is-front', i===fi);
       const dist = Math.min(Math.abs(i-fi), N-Math.abs(i-fi));
-      c.style.opacity = dist===0?'1':dist===1?'0.6':'0.25';
+      // Use filter:brightness instead of opacity — opacity < 1 creates a
+      // stacking context per card which breaks transform-style:preserve-3d.
+      c.style.filter = dist===0?'brightness(1)':dist===1?'brightness(0.55)':'brightness(0.25)';
     });
     pdots.forEach((d,i) => d.classList.toggle('is-active', i===fi));
   }
