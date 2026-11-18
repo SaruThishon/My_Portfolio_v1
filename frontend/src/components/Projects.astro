@@ -68,6 +68,25 @@ const N = projects.length;
         </div>
       </div>
 
+      <!-- Mobile fallback: simple vertical list (hidden on desktop) -->
+      <div class="pj-mobile-list container" aria-label="Projects list">
+        {projects.map((p, i) => (
+          <a href={`/projects/${p.slug}`} class="pj-mob-card reveal">
+            <div class="pj-mob-card__top">
+              <span class="pj-mob-card__cat">{p.category}</span>
+              {p.is_featured && <span class="pj-mob-card__badge">Featured</span>}
+              <span class="pj-mob-card__num">0{i + 1}</span>
+            </div>
+            <h3 class="pj-mob-card__title">{p.title}</h3>
+            <p class="pj-mob-card__desc">{p.short_description}</p>
+            <div class="pj-mob-card__tags">
+              {p.technologies.slice(0,4).map(t => <span class="pj-mob-card__tag">{t}</span>)}
+            </div>
+          </a>
+        ))}
+        <a href="/projects" class="pj-mob-view-all">View all projects →</a>
+      </div>
+
       <!-- Scroll hint -->
       <div class="pj-hint" id="pj-hint" aria-hidden="true">
         <span class="pj-hint__line"></span>
