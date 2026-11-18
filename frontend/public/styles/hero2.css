@@ -73,10 +73,6 @@
     position:relative;
     min-height:100svh;
   }
-  .hero__container--with-image .hero__content{
-    padding-inline:0;
-  }
-
   /* Portrait: absolute, fills from very top (behind nav) down ~75% of screen */
   .hero__portrait-col{
     position:absolute;
@@ -109,8 +105,8 @@
   .hero__content{
     position:relative;
     z-index:2;
-    padding:1.5rem clamp(1rem,5vw,1.5rem) 2.5rem;
-    /* Offset so it starts below the portrait gradient fade */
+    /* Restore side gutters — the previous padding-inline:0 override removed them */
+    padding:1.5rem clamp(1.25rem,5vw,1.75rem) 2.5rem;
     margin-top:50vh;
     max-width:100% !important;
   }
