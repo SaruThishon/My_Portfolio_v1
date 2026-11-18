@@ -10,6 +10,8 @@ interface Props {
   description?: string;
   ogImage?: string;
   canonical?: string;
+  twitterUrl?: string;
+  instagramUrl?: string;
 }
 
 const {
@@ -17,6 +19,8 @@ const {
   description = 'Personal portfolio of a Software Engineer specializing in Python, SQL, and Data Science.',
   ogImage = '/og-image.png',
   canonical,
+  twitterUrl,
+  instagramUrl,
 } = Astro.props;
 
 const siteUrl = import.meta.env.SITE || 'http://localhost:4321';
@@ -78,7 +82,7 @@ const pageUrl = canonical || `${siteUrl}${Astro.url.pathname}`;
     <slot />
   </main>
 
-  <Footer />
+  <Footer twitterUrl={twitterUrl} instagramUrl={instagramUrl} />
 
   <!-- Scroll reveal & interactions -->
   <script>

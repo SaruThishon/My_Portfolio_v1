@@ -1,21 +1,47 @@
 ---
+interface Props { twitterUrl?: string; instagramUrl?: string; }
+const { twitterUrl, instagramUrl } = Astro.props;
 ---
 <footer class="footer">
   <div class="container">
     <div class="footer__inner">
       <div class="footer__brand">
         <a href="/" class="footer__logo">SARU THISHON</a>
-        <p class="footer__tagline">Built with curiosity and caffeine.</p>
+        <p class="footer__tagline">Built with caffeine and curiosity.</p>
       </div>
-      <nav class="footer__nav" aria-label="Footer navigation">
-        <ul role="list">
-          <li><a href="/#about">About</a></li>
-          <li><a href="/#projects">Projects</a></li>
-          <li><a href="/#skills">Skills</a></li>
-          <li><a href="/#journey">Journey</a></li>
-          <li><a href="/#contact">Contact</a></li>
-        </ul>
-      </nav>
+      <div class="footer__right">
+        <nav class="footer__nav" aria-label="Footer navigation">
+          <ul role="list">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#projects">Projects</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#journey">Journey</a></li>
+            <li><a href="/#contact">Contact</a></li>
+          </ul>
+        </nav>
+        {(twitterUrl || instagramUrl) && (
+          <div class="footer__social">
+            {twitterUrl && (
+              <a href={twitterUrl} target="_blank" rel="noopener noreferrer" class="footer__social-link" aria-label="X (Twitter)">
+                <!-- X / Twitter logo -->
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.26 5.632 5.904-5.632Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+              </a>
+            )}
+            {instagramUrl && (
+              <a href={instagramUrl} target="_blank" rel="noopener noreferrer" class="footer__social-link" aria-label="Instagram">
+                <!-- Instagram logo -->
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                  <circle cx="12" cy="12" r="4"/>
+                  <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+                </svg>
+              </a>
+            )}
+          </div>
+        )}
+      </div>
     </div>
     <div class="footer__bottom">
       <p class="footer__copy">© {new Date().getFullYear()} - All rights reserved.</p>
@@ -36,6 +62,24 @@
   display: flex; justify-content: space-between; align-items: flex-start;
   gap: var(--space-8); flex-wrap: wrap;
   padding-bottom: var(--space-8); border-bottom: 1px solid var(--color-border);
+}
+.footer__right {
+  display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-5);
+}
+.footer__social {
+  display: flex; align-items: center; gap: var(--space-3);
+}
+.footer__social-link {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 50%;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+.footer__social-link:hover {
+  color: var(--color-accent-primary);
+  border-color: rgba(183,148,246,0.4);
+  background: rgba(183,148,246,0.06);
 }
 .footer__logo {
   font-family: var(--font-heading); font-weight: 700; font-size: var(--text-xl);
