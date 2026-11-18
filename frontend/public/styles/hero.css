@@ -1,81 +1,134 @@
-/* Hero base + portrait + name */
-.hero{position:relative;min-height:100svh;display:flex;flex-direction:column;justify-content:center;overflow:hidden;padding-top:72px}
+/* ═══════════════════════════════════════════
+   HERO CSS — clean rewrite
+   ═══════════════════════════════════════════ */
+
+/* ── Section shell ─────────────────────────── */
+.hero{
+  position:relative;
+  min-height:100svh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  overflow:hidden;
+  padding-top:72px; /* nav height */
+}
+
+/* ── Backgrounds ────────────────────────────── */
 .hero__bg{position:absolute;inset:0;pointer-events:none;z-index:0}
-.hero__bg-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(53,48,61,.2) 1px,transparent 1px),linear-gradient(90deg,rgba(53,48,61,.2) 1px,transparent 1px);background-size:72px 72px;mask-image:radial-gradient(ellipse 100% 100% at 50% 0%,black 20%,transparent 80%)}
+.hero__bg-grid{
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(53,48,61,.2) 1px,transparent 1px),linear-gradient(90deg,rgba(53,48,61,.2) 1px,transparent 1px);
+  background-size:72px 72px;
+  mask-image:radial-gradient(ellipse 100% 100% at 50% 0%,black 20%,transparent 80%);
+}
 .hero__bg-orb{position:absolute;border-radius:50%;filter:blur(110px);opacity:.08;animation:orb-drift 14s ease-in-out infinite alternate}
 .hero__bg-orb--1{width:500px;height:500px;right:-100px;top:5%;background:#B794F6}
 .hero__bg-orb--2{width:320px;height:320px;right:30%;bottom:5%;background:#A78BFA;animation-delay:-7s}
 @keyframes orb-drift{from{transform:translate(0,0)}to{transform:translate(16px,-16px) scale(1.07)}}
 @media(prefers-reduced-motion:reduce){.hero__bg-orb{animation:none}}
+
+/* ── Main container ─────────────────────────── */
 .hero__container{
   position:relative;z-index:1;
-  padding-block:clamp(3.5rem,8vw,6rem);
+  padding-block:clamp(2rem,5vw,4rem);
 }
-/* When a portrait is present we override the container's left padding to zero
-   so the portrait column reaches the viewport edge. The right (content) side
-   keeps its standard gutter via the grid gap + content column padding. */
-/* Portrait column is 46% of the viewport width (responsive via vw)
-   so it stays proportionally large on any screen size */
+
+/* Two-column layout: portrait left, content right */
 .hero__container--with-image{
   display:grid;
-  grid-template-columns:46vw 1fr;
-  gap:0;
-  align-items:center;
+  /* Portrait gets ~45% of viewport, content gets the rest */
+  grid-template-columns:45vw 1fr;
+  align-items:stretch; /* both columns same height */
   padding-inline:0;
+  gap:0;
 }
-.hero__container--with-image .hero__content{
-  padding-inline:clamp(2rem,4vw,5rem) clamp(1.25rem,3vw,2.5rem);
-}
+
+/* ── Portrait column (LEFT) ─────────────────── */
 .hero__portrait-col{
-  position:relative;display:flex;align-items:center;justify-content:center;
-  /* Tall enough to show most of the person */
-  min-height:min(90vh, 820px);
-  -webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 6%,black 94%,transparent 100%),linear-gradient(to right,black 0%,black 72%,transparent 100%);
-  mask-image:linear-gradient(to bottom,transparent 0%,black 6%,black 94%,transparent 100%),linear-gradient(to right,black 0%,black 72%,transparent 100%);
-  -webkit-mask-composite:destination-in;mask-composite:intersect;
+  position:relative;
+  /* Fill the grid row height fully */
+  min-height:calc(100svh - 72px);
+  display:flex;
+  align-items:flex-end; /* image anchored to bottom so feet aren't cut */
+  justify-content:center;
+  /* Fade: top edge (overlaps nav), bottom, and right edge into bg */
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent 0%, black 8%, black 90%, transparent 100%),
+    linear-gradient(to right, black 0%, black 70%, transparent 100%);
+  mask-image:
+    linear-gradient(to bottom, transparent 0%, black 8%, black 90%, transparent 100%),
+    linear-gradient(to right, black 0%, black 70%, transparent 100%);
+  -webkit-mask-composite:destination-in;
+  mask-composite:intersect;
 }
-.hero__portrait-glow{position:absolute;inset:-8%;background:radial-gradient(ellipse 70% 60% at 50% 50%,rgba(183,148,246,.11) 0%,transparent 65%);z-index:0}
-.hero__portrait-img-wrap{position:relative;z-index:1;width:100%;animation:portrait-float 8s ease-in-out infinite}
-.hero__portrait-enter .hero__portrait-img-wrap{animation:portrait-enter .9s cubic-bezier(.16,1,.3,1) forwards,portrait-float 8s ease-in-out .9s infinite}
+
+.hero__portrait-glow{
+  position:absolute;inset:-8%;
+  background:radial-gradient(ellipse 70% 60% at 50% 50%,rgba(183,148,246,.11) 0%,transparent 65%);
+  z-index:0;
+}
+
+.hero__portrait-img-wrap{
+  position:relative;z-index:1;
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  animation:portrait-float 8s ease-in-out infinite;
+}
+
+.hero__portrait-enter .hero__portrait-img-wrap{
+  animation:portrait-enter .9s cubic-bezier(.16,1,.3,1) forwards, portrait-float 8s ease-in-out .9s infinite;
+}
+
 @keyframes portrait-enter{from{opacity:0;transform:scale(1.05) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 @keyframes portrait-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-@media(prefers-reduced-motion:reduce){.hero__portrait-img-wrap,.hero__portrait-enter .hero__portrait-img-wrap{animation:none;opacity:1;transform:none}}
-.hero__portrait-img{width:100%;height:auto;max-height:min(88vh,820px);object-fit:cover;object-position:top center;display:block}
-.hero__content{min-width:0}
-.hero__name-display{font-family:'Space Grotesk',-apple-system,sans-serif;font-weight:700;letter-spacing:-.045em;line-height:.93;font-size:clamp(3.5rem,9vw,8rem);display:flex;flex-direction:column;margin:0 0 .75rem}
-.hero__firstname{display:block;color:#F5F0FA}
-.hero__lastname{display:block;background:linear-gradient(135deg,#B794F6 0%,#A78BFA 50%,#C4A8FF 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hero__title-wrap{
-  display:flex;align-items:center;
-  margin-top:.6rem;
-  min-height:2.2em;   /* prevents layout shift as text types */
-  overflow:hidden;
-}
-.hero__title-static{display:none}
-
-/* The span that receives typewriter characters */
-.hero__title-typing{
-  font-family:'Space Grotesk',sans-serif;
-  font-size:clamp(1.1rem,2.6vw,1.5rem);
-  font-weight:400;
-  color:#A9A1B1;
-  letter-spacing:.01em;
-}
-
-/* Blinking cursor */
-.hero__title-cursor{
-  font-family:'Space Grotesk',sans-serif;
-  font-size:clamp(1.1rem,2.6vw,1.5rem);
-  font-weight:300;
-  color:#B794F6;
-  margin-left:1px;
-  animation:blink-cursor .75s step-end infinite;
-  user-select:none;
-}
-@keyframes blink-cursor{
-  0%,100%{opacity:1}
-  50%{opacity:0}
-}
 @media(prefers-reduced-motion:reduce){
-  .hero__title-cursor{animation:none}
+  .hero__portrait-img-wrap,
+  .hero__portrait-enter .hero__portrait-img-wrap{animation:none;opacity:1;transform:none}
 }
+
+/* Image: fills width, tall as possible */
+.hero__portrait-img{
+  width:100%;
+  height:100%;
+  max-height:calc(100svh - 72px);
+  object-fit:cover;
+  object-position:top center;
+  display:block;
+}
+
+/* ── Content column (RIGHT) ─────────────────── */
+.hero__content{
+  min-width:0;
+  padding-inline:clamp(2.5rem,4vw,5rem) clamp(1.5rem,3vw,3rem);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+/* ── Name ────────────────────────────────────── */
+.hero__name-display{
+  font-family:'Space Grotesk',-apple-system,sans-serif;
+  font-weight:700;
+  letter-spacing:-.045em;
+  line-height:.93;
+  font-size:clamp(3.5rem,6.5vw,8rem);
+  display:flex;flex-direction:column;
+  margin:0 0 .75rem;
+}
+.hero__firstname{display:block;color:#F5F0FA}
+.hero__lastname{
+  display:block;
+  background:linear-gradient(135deg,#B794F6 0%,#A78BFA 50%,#C4A8FF 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+
+/* ── Typewriter title ────────────────────────── */
+.hero__title-wrap{display:flex;align-items:center;margin-top:.6rem;min-height:2.2em;overflow:hidden}
+.hero__title-static{display:none}
+.hero__title-typing{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.1rem,2vw,1.5rem);font-weight:400;color:#A9A1B1;letter-spacing:.01em}
+.hero__title-cursor{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.1rem,2vw,1.5rem);font-weight:300;color:#B794F6;margin-left:1px;animation:blink-cursor .75s step-end infinite;user-select:none}
+@keyframes blink-cursor{0%,100%{opacity:1}50%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.hero__title-cursor{animation:none}}
