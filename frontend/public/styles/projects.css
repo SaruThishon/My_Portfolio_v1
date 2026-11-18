@@ -1,16 +1,131 @@
-/* Projects 3D Carousel — Part 1: layout + card base */
-.pj-header{margin-bottom:3rem;max-width:640px}
+/* ═══════════════════════════════════════════════════════
+   PROJECTS — Scroll-driven 3D ring carousel
+   swift-panda-38 ring geometry + fast-rabbit-28 card FX
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Section header ─────────────────────────────────── */
+.pj-section-header{padding-block:clamp(3rem,6vw,5rem) 2rem}
 .pj-heading{font-size:clamp(2rem,5vw,3.5rem);font-weight:700;letter-spacing:-.03em;margin-block:1rem;line-height:1.1}
-.pj-subtext{font-size:1.0625rem;color:#A9A1B1;line-height:1.7}
-.pj-carousel-wrap{position:relative;width:100%;overflow:hidden;padding-block:2.5rem}
-.pj-carousel{display:flex;gap:1.25rem;padding-inline:max(1rem,calc((100vw - 1240px)/2 + 1rem));overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;cursor:grab;perspective:1400px;perspective-origin:50% 40%}
-.pj-carousel::-webkit-scrollbar{display:none}
-.pj-carousel.is-dragging{cursor:grabbing;user-select:none}
-.pj-card{position:relative;flex-shrink:0;width:320px;height:460px;border-radius:20px;overflow:hidden;scroll-snap-align:center;transform:rotateY(var(--ry,0deg)) scale(var(--sc,1));transform-style:preserve-3d;transition:transform .5s cubic-bezier(.16,1,.3,1),box-shadow .5s,opacity .4s;border:1px solid rgba(53,48,61,.8);background:#19161F;box-shadow:0 4px 24px rgba(0,0,0,.35)}
-.pj-card--active{--ry:0deg;--sc:1.04;border-color:rgba(183,148,246,.35);box-shadow:0 12px 48px rgba(0,0,0,.5);z-index:2}
-.pj-card--left{--ry:12deg;opacity:.75}.pj-card--right{--ry:-12deg;opacity:.75}
-.pj-card--far-left{--ry:22deg;opacity:.45}.pj-card--far-right{--ry:-22deg;opacity:.45}
-.pj-card--featured{width:380px}
-.reveal-card{opacity:0;transform:translateY(40px) scale(.96);transition:opacity .6s cubic-bezier(.16,1,.3,1),transform .6s cubic-bezier(.16,1,.3,1);transition-delay:var(--cd,0s)}
-.reveal-card.is-visible{opacity:1;transform:translateY(0) scale(var(--sc,1))}
-@media(prefers-reduced-motion:reduce){.reveal-card{opacity:1;transform:none;transition:none}.pj-card{transform:none}}
+.pj-subtext{font-size:1.0625rem;color:#A9A1B1;line-height:1.7;max-width:540px}
+
+/* ── Scroll track ───────────────────────────────────── */
+/* Height = 100vh per card + 1 extra section to exit cleanly */
+.pj-track{
+  height:calc(var(--n,3) * 100vh);
+  position:relative;
+}
+
+/* ── Sticky stage ───────────────────────────────────── */
+/* Stays in view for the entire scroll track */
+.pj-stage{
+  position:sticky;
+  top:0;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+/* ── 3D ring wrapper ────────────────────────────────── */
+.pj-ring-wrap{
+  position:relative;
+  /* perspective is set on the wrapper so all cards share one vanishing point */
+  perspective:900px;
+  perspective-origin:50% 50%;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* The ring itself — rotateY is driven by scroll via JS */
+.pj-ring{
+  position:relative;
+  /* card size fed back as CSS var */
+  width:var(--card-w,340px);
+  height:var(--card-h,460px);
+  transform-style:preserve-3d;
+  /* smooth lerp handled in JS; CSS transition catches hover-pause release */
+  transition:transform 0.1s linear;
+}
+
+/* ── Individual card position in the ring ───────────── */
+.pj-card{
+  position:absolute;
+  inset:0;
+  border-radius:20px;
+  /* Each card is rotated to its slot then pushed out along Z */
+  transform:
+    rotateY(calc(360deg / var(--n,1) * var(--i,0)))
+    translateZ(var(--tz,320px));
+  transform-style:preserve-3d;
+  /* Card face tilt driven by --rx,--ry CSS vars set on mousemove */
+  transition:box-shadow .4s ease, border-color .4s ease, filter .3s ease;
+  cursor:pointer;
+  /* Base appearance */
+  background:linear-gradient(145deg, #1e1a27 0%, #17141e 100%);
+  border:1px solid rgba(53,48,61,.9);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.04),
+    0 8px 32px rgba(0,0,0,.5);
+  overflow:hidden;
+  /* backface-visibility: hidden prevents seeing the back of far cards */
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+}
+
+/* Active (front-facing) card — extra glow */
+.pj-card.is-front{
+  border-color:rgba(183,148,246,.4);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.08),
+    0 0 0 1px rgba(183,148,246,.2),
+    0 12px 48px rgba(0,0,0,.6),
+    0 0 60px rgba(183,148,246,.08);
+}
+
+/* Hover tilt — applied via inline style from JS */
+.pj-card:hover{
+  border-color:rgba(183,148,246,.5);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.12),
+    0 0 0 1px rgba(183,148,246,.3),
+    0 20px 60px rgba(0,0,0,.7),
+    0 0 80px rgba(183,148,246,.12);
+  filter:brightness(1.08);
+}
+
+/* ── Glare overlay (fast-rabbit-28 technique) ──────── */
+/* Position tracks mouse via --mx,--my (0–1) set in JS */
+.pj-card__glare{
+  position:absolute;inset:0;
+  border-radius:inherit;
+  pointer-events:none;
+  z-index:3;
+  /* Moving radial highlight */
+  background:radial-gradient(
+    circle at calc(var(--mx,0.5)*100%) calc(var(--my,0.5)*100%),
+    rgba(255,255,255,.12) 0%,
+    rgba(183,148,246,.06) 25%,
+    transparent 60%
+  );
+  opacity:0;
+  transition:opacity .3s ease;
+}
+.pj-card:hover .pj-card__glare{opacity:1}
+
+/* ── Corner brackets ────────────────────────────────── */
+.pj-card__br{
+  position:absolute;
+  width:20px;height:20px;
+  border-color:rgba(183,148,246,.7);
+  border-style:solid;
+  pointer-events:none;z-index:4;
+  opacity:0;
+  transition:opacity .3s ease,transform .4s cubic-bezier(.16,1,.3,1);
+}
+.pj-card__br--tl{top:14px;left:14px;border-width:2px 0 0 2px;transform:translate(-6px,-6px)}
+.pj-card__br--br{bottom:14px;right:14px;border-width:0 2px 2px 0;transform:translate(6px,6px)}
+.pj-card:hover .pj-card__br,.pj-card.is-front .pj-card__br{opacity:1;transform:translate(0,0)}
