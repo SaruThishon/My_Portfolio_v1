@@ -10,15 +10,16 @@
 @media(max-width:1024px){.pj-grid--3{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:680px){.pj-grid,.pj-grid--3{grid-template-columns:1fr}}
 
-/* Card base */
+/* Card base — 2/3 ratio gives a cinematic tall card without being overwhelming */
 .pj-card{
   position:relative;border-radius:16px;overflow:hidden;
-  aspect-ratio:3/4;background:#201C27;
+  aspect-ratio:2/3;background:#201C27;
   will-change:transform;transform-style:preserve-3d;
   cursor:pointer;
 }
-.pj-card--hero{grid-column:1/-1;aspect-ratio:21/9}
-@media(max-width:680px){.pj-card--hero{grid-column:auto;aspect-ratio:3/4}}
+/* Hero (first/featured) card spans full width with widescreen ratio */
+.pj-card--hero{grid-column:1/-1;aspect-ratio:16/7}
+@media(max-width:680px){.pj-card--hero{grid-column:auto;aspect-ratio:2/3}}
 
 /* Entrance */
 .reveal-card{

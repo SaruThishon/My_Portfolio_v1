@@ -7,8 +7,24 @@
 .hero__bg-orb--2{width:320px;height:320px;right:30%;bottom:5%;background:#A78BFA;animation-delay:-7s}
 @keyframes orb-drift{from{transform:translate(0,0)}to{transform:translate(16px,-16px) scale(1.07)}}
 @media(prefers-reduced-motion:reduce){.hero__bg-orb{animation:none}}
-.hero__container{position:relative;z-index:1;padding-block:clamp(3.5rem,8vw,6rem)}
-.hero__container--with-image{display:grid;grid-template-columns:440px 1fr;gap:clamp(2.5rem,5vw,6rem);align-items:center}
+.hero__container{
+  position:relative;z-index:1;
+  padding-block:clamp(3.5rem,8vw,6rem);
+}
+/* When a portrait is present we override the container's left padding to zero
+   so the portrait column reaches the viewport edge. The right (content) side
+   keeps its standard gutter via the grid gap + content column padding. */
+.hero__container--with-image{
+  display:grid;
+  grid-template-columns:420px 1fr;
+  gap:0;                 /* no gap — we control spacing via portrait width + content padding */
+  align-items:center;
+  padding-inline:0;      /* remove container padding — portrait needs the full left edge */
+}
+/* Give the content column its own left padding so text is properly indented */
+.hero__container--with-image .hero__content{
+  padding-inline:clamp(2rem,5vw,5rem) clamp(1.25rem,5vw,2.5rem);
+}
 .hero__portrait-col{position:relative;display:flex;align-items:center;justify-content:center;min-height:520px;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 8%,black 92%,transparent 100%),linear-gradient(to right,black 0%,black 72%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0%,black 8%,black 92%,transparent 100%),linear-gradient(to right,black 0%,black 72%,transparent 100%);-webkit-mask-composite:destination-in;mask-composite:intersect}
 .hero__portrait-glow{position:absolute;inset:-8%;background:radial-gradient(ellipse 70% 60% at 50% 50%,rgba(183,148,246,.11) 0%,transparent 65%);z-index:0}
 .hero__portrait-img-wrap{position:relative;z-index:1;width:100%;animation:portrait-float 8s ease-in-out infinite}

@@ -21,19 +21,39 @@
 .hero__enter-1{animation-delay:.08s}.hero__enter-2{animation-delay:.18s}.hero__enter-3{animation-delay:.26s}.hero__enter-4{animation-delay:.34s}.hero__enter-5{animation-delay:.44s}.hero__enter-6{animation-delay:.54s}
 @keyframes hero-enter{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.hero__enter-1,.hero__enter-2,.hero__enter-3,.hero__enter-4,.hero__enter-5,.hero__enter-6{opacity:1;transform:none;animation:none}}
-.hero__scroll{position:absolute;bottom:2rem;left:clamp(1.25rem,5vw,2.5rem);display:flex;flex-direction:column;align-items:center;gap:.5rem;animation:scroll-bounce 2.5s ease-in-out infinite;z-index:2}
+.hero__scroll{position:absolute;bottom:2.5rem;right:clamp(1.5rem,3.5vw,3rem);display:flex;flex-direction:column;align-items:center;gap:.5rem;animation:scroll-bounce 2.5s ease-in-out infinite;z-index:2}
 .hero__scroll-line{width:1px;height:44px;background:linear-gradient(to bottom,transparent,rgba(183,148,246,.5))}
 .hero__scroll-text{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#6B6475;writing-mode:vertical-rl}
 @keyframes scroll-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
 @media(prefers-reduced-motion:reduce){.hero__scroll{animation:none}}
 @media(max-width:600px){.hero__scroll{display:none}}
 /* Responsive */
-@media(max-width:1100px){.hero__container--with-image{grid-template-columns:380px 1fr;gap:3rem}.hero__name-display{font-size:clamp(3rem,7vw,6rem)}}
+@media(max-width:1200px){
+  .hero__container--with-image{grid-template-columns:360px 1fr}
+  .hero__name-display{font-size:clamp(3rem,7vw,6.5rem)}
+}
+@media(max-width:1000px){
+  .hero__container--with-image{grid-template-columns:300px 1fr}
+  .hero__name-display{font-size:clamp(3rem,7vw,5.5rem)}
+}
 @media(max-width:860px){
-  .hero__container--with-image{grid-template-columns:1fr;grid-template-rows:auto auto}
-  .hero__portrait-col{min-height:260px;max-width:280px;margin-inline:auto;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 10%,black 90%,transparent 100%),linear-gradient(to right,transparent 0%,black 8%,black 92%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0%,black 10%,black 90%,transparent 100%),linear-gradient(to right,transparent 0%,black 8%,black 92%,transparent 100%)}
-  .hero__portrait-img{max-height:260px}
+  .hero__container--with-image{
+    grid-template-columns:1fr;
+    grid-template-rows:auto auto;
+    padding-inline:clamp(1.25rem,5vw,2.5rem); /* restore normal padding when stacked */
+  }
+  .hero__container--with-image .hero__content{
+    padding-inline:0; /* reset — container padding handles it */
+  }
+  .hero__portrait-col{min-height:260px;max-width:300px;margin-inline:auto;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 10%,black 90%,transparent 100%),linear-gradient(to right,transparent 0%,black 8%,black 92%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0%,black 10%,black 90%,transparent 100%),linear-gradient(to right,transparent 0%,black 8%,black 92%,transparent 100%)}
+  .hero__portrait-img{max-height:280px}
   .hero__description{max-width:100%}
   .hero__name-display{font-size:clamp(3rem,10vw,5rem)}
 }
-@media(max-width:480px){.hero__name-display{font-size:clamp(2.8rem,13vw,4rem)}.hero__actions{gap:.75rem}.btn{padding:.6em 1.2em;font-size:.875rem}.hero__portrait-col{max-width:200px;min-height:200px}.hero__portrait-img{max-height:200px}}
+@media(max-width:480px){
+  .hero__name-display{font-size:clamp(2.8rem,13vw,4rem)}
+  .hero__actions{gap:.75rem}
+  .btn{padding:.6em 1.2em;font-size:.875rem}
+  .hero__portrait-col{max-width:220px;min-height:220px}
+  .hero__portrait-img{max-height:220px}
+}
