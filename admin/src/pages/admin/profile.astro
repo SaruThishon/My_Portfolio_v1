@@ -12,7 +12,10 @@ if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
   const payload: any = {};
   ['full_name','professional_title','hero_headline','hero_description','about_bio','location','availability_text','email','github_url','linkedin_url','twitter_url','website_url','profile_image_url'].forEach(k => { const v = form.get(k) as string; if (v !== null) payload[k] = v || null; });
-  payload.is_available = form.get('is_available') === 'on';
+  payload.is_available     = form.get('is_available') === 'on';
+  payload.is_online_public = form.get('is_online_public') === 'on';
+  const instagramVal = form.get('instagram_url') as string;
+  payload.extra_social_links = { ...(profile?.extra_social_links || {}), instagram: instagramVal || null };
   try {
     const r = await fetch(`${API}/api/profile`, { method:'PUT', headers:h, body:JSON.stringify(payload) });
     const d = await r.json();
@@ -38,13 +41,18 @@ if (Astro.request.method === 'POST') {
         <div class="form-group"><label class="form-label">Email</label><input name="email" class="form-input" type="email" value={profile.email??''}/></div>
         <div class="form-group"><label class="form-label">GitHub URL</label><input name="github_url" class="form-input" value={profile.github_url??''}/></div>
         <div class="form-group"><label class="form-label">LinkedIn URL</label><input name="linkedin_url" class="form-input" value={profile.linkedin_url??''}/></div>
-        <div class="form-group"><label class="form-label">Twitter URL</label><input name="twitter_url" class="form-input" value={profile.twitter_url??''}/></div>
+        <div class="form-group"><label class="form-label">Twitter / X URL</label><input name="twitter_url" class="form-input" value={profile.twitter_url??''} placeholder="https://x.com/yourhandle"/></div>
+        <div class="form-group"><label class="form-label">Instagram URL</label><input name="instagram_url" class="form-input" value={profile.extra_social_links?.instagram??''} placeholder="https://instagram.com/yourhandle"/></div>
         <div class="form-group"><label class="form-label">Website URL</label><input name="website_url" class="form-input" value={profile.website_url??''}/></div>
         <div class="form-group" style="grid-column:1/-1"><label class="form-label">Profile Image URL</label><input name="profile_image_url" class="form-input" value={profile.profile_image_url??''} placeholder="https://... or upload via Media"/></div>
         <div class="form-group" style="grid-column:1/-1">
           <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
             <input type="checkbox" name="is_available" checked={profile.is_available} style="accent-color:#B794F6;width:16px;height:16px"/>
             <span class="form-label" style="margin:0">Available for opportunities</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;margin-top:.6rem">
+            <input type="checkbox" name="is_online_public" checked={profile.is_online_public} style="accent-color:#B794F6;width:16px;height:16px"/>
+            <span class="form-label" style="margin:0">Show as Online on hero (green dot)</span>
           </label>
         </div>
       </div>
