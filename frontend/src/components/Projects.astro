@@ -6,7 +6,11 @@ interface Project {
 }
 interface Props { projects?: Project[]; }
 const { projects = [] } = Astro.props;
-const N = projects.length;
+// Cap ring to 6 cards max — more than 6 makes the ring too wide and scroll too long.
+// Extra projects are accessible via the /projects page.
+const RING_MAX = 6;
+const ringProjects = projects.slice(0, RING_MAX);
+const N = ringProjects.length;
 ---
 <!-- Section header — normal page flow, scrolls away -->
 <div class="pj-section-header container reveal" id="projects">
@@ -27,17 +31,17 @@ const N = projects.length;
   <div class="pj-track" id="pj-track" style={`--n:${N}`}>
     <div class="pj-stage" id="pj-stage">
 
-      <!-- Progress dots -->
+      <!-- Progress dots (one per ring card, max 6) -->
       <div class="pj-progress" id="pj-progress" aria-hidden="true">
-        {projects.map((_, i) => (
+        {ringProjects.map((_, i) => (
           <span class={`pj-pdot${i===0?' is-active':''}`} data-i={i}></span>
         ))}
       </div>
 
-      <!-- 3D ring of cards -->
+      <!-- 3D ring of cards (max 6) -->
       <div class="pj-ring-wrap" id="pj-ring-wrap">
         <div class="pj-ring" id="pj-ring" style={`--n:${N}`}>
-          {projects.map((p, i) => (
+          {ringProjects.map((p, i) => (
             <article class="pj-card" style={`--i:${i};--n:${N}`} data-i={i}>
               <!-- Glare (follows mouse via --mx,--my on the card element) -->
               <div class="pj-card__glare" aria-hidden="true"></div>

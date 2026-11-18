@@ -9,9 +9,9 @@
 .pj-subtext{font-size:1.0625rem;color:#A9A1B1;line-height:1.7;max-width:540px}
 
 /* ── Scroll track ───────────────────────────────────── */
-/* Height = 100vh per card + 1 extra section to exit cleanly */
+/* Each card gets 100vh of scroll travel. Max N=6 so max 600vh. */
 .pj-track{
-  height:calc(var(--n,3) * 100vh);
+  height:calc((var(--n,3) + 0.5) * 100vh); /* +0.5vh buffer for clean exit */
   position:relative;
 }
 
@@ -32,9 +32,11 @@
 /* ── 3D ring wrapper ────────────────────────────────── */
 .pj-ring-wrap{
   position:relative;
-  /* perspective is set on the wrapper so all cards share one vanishing point */
-  perspective:900px;
+  /* perspective on wrapper = all cards share one vanishing point */
+  perspective:1200px;
   perspective-origin:50% 50%;
+  /* preserve-3d so perspective passes through to card children */
+  transform-style:preserve-3d;
   width:100%;
   display:flex;
   align-items:center;

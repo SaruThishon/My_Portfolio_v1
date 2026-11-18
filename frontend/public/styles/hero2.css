@@ -101,12 +101,17 @@
     object-position:top center;
   }
 
-  /* Content: sits below, z-index above portrait */
-  .hero__content{
+  /* Content: sits below portrait, z-index above it.
+     Use !important to beat the higher-specificity base rule:
+     .hero__container--with-image .hero__content { padding-inline: ... }  */
+  .hero__content,
+  .hero__container--with-image .hero__content{
     position:relative;
     z-index:2;
-    /* Restore side gutters — the previous padding-inline:0 override removed them */
-    padding:1.5rem clamp(1.25rem,5vw,1.75rem) 2.5rem;
+    padding-top:1.5rem !important;
+    padding-bottom:2.5rem !important;
+    padding-left:clamp(1.25rem,5vw,1.75rem) !important;
+    padding-right:clamp(1.25rem,5vw,1.75rem) !important;
     margin-top:50vh;
     max-width:100% !important;
   }
