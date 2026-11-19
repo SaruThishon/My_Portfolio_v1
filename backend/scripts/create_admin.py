@@ -70,6 +70,21 @@ async def seed_default_settings():
         print("✅ Default settings seeded.")
 
 
+async def main(username: str, email: str, password: str):
+    """Run both steps inside a single event loop.
+
+    Previously two asyncio.run() calls were used — the second one failed
+    because the SQLAlchemy engine (and its asyncpg SSL connections) were
+    already disposed when the first event loop closed.
+    """
+    await create_admin(username, email, password)
+    await seed_default_settings()
+    # Dispose the engine explicitly so asyncpg can close SSL connections
+    # gracefully before the event loop shuts down.
+    from app.core.database import engine
+    await engine.dispose()
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create admin user")
     parser.add_argument("--username", default=settings.ADMIN_USERNAME)
@@ -80,5 +95,4 @@ if __name__ == "__main__":
     if args.password == "changeme" or len(args.password) < 8:
         print("⚠️  Warning: Please use a strong password!")
 
-    asyncio.run(create_admin(args.username, args.email, args.password))
-    asyncio.run(seed_default_settings())
+    asyncio.run(main(args.username, args.email, args.password))
