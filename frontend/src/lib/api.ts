@@ -1,6 +1,9 @@
 import type { Profile, Project, Skill, Education, Experience, Certification, Resume, EnquirySubmit } from '../types/api';
 
-const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = (
+  process.env.PUBLIC_API_URL ??
+  (import.meta.env.PUBLIC_API_URL as string | undefined)
+) || 'http://localhost:8000';
 
 export async function fetchAPI<T>(path: string): Promise<T | null> {
   try {
