@@ -36,7 +36,7 @@ if (Astro.request.method === 'POST') {
       error = data.detail || 'Invalid credentials';
     }
   } catch (e) {
-    error = 'Connection error — make sure the backend is running on port 8000.';
+    error = `Connection error — could not reach backend (${BACKEND_URL}). Check server logs.`;
   }
 }
 ---
