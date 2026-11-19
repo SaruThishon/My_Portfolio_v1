@@ -50,6 +50,9 @@ logs/
 uploads/
 media/
 
+# ─── Backups (never commit DB dumps or file archives) ─────────────────────────
+backups/
+
 # ─── Testing ──────────────────────────────────────────────────────────────────
 .pytest_cache/
 .coverage
