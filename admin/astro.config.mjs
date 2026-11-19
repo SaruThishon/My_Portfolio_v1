@@ -6,7 +6,7 @@ import react from '@astrojs/react';
 // https://astro.build/config
 export default defineConfig({
   output: 'server',
-  adapter: vercel({ nodeVersion: '20' }),
+  adapter: vercel({ nodeVersion: '22' }),
   integrations: [react()],
   site: process.env.ADMIN_FRONTEND_URL || 'http://localhost:4322',
   server: {
