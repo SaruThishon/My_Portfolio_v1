@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -12,14 +13,12 @@ router = APIRouter(prefix="/profile", tags=["Profile"])
 
 
 async def get_or_create_profile(db: AsyncSession) -> Profile:
+    # Use INSERT ... ON CONFLICT DO NOTHING to avoid race condition on concurrent requests.
+    # We attempt to insert a default profile row; if one already exists the insert is a no-op.
+    await db.execute(pg_insert(Profile).values().on_conflict_do_nothing())
+    await db.commit()
     result = await db.execute(select(Profile))
-    profile = result.scalar_one_or_none()
-    if not profile:
-        profile = Profile()
-        db.add(profile)
-        await db.commit()
-        await db.refresh(profile)
-    return profile
+    return result.scalar_one()
 
 
 @router.get("", response_model=ProfileOut)

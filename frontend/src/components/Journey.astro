@@ -1,10 +1,8 @@
 ---
-interface Education { id:string;institution:string;degree:string;field_of_study?:string;start_date?:string;end_date?:string;is_current:boolean;description?:string;grade?:string; }
-interface Experience { id:string;organization:string;position:string;employment_type:string;start_date?:string;end_date?:string;is_current:boolean;description?:string;technologies:string[]; }
-interface Certification { id:string;name:string;issuer:string;issue_date?:string;credential_url?:string;description?:string; }
+import type { Education, Experience, Certification } from '../types/api';
 interface Props { education?: Education[]; experience?: Experience[]; certifications?: Certification[]; }
 const { education=[], experience=[], certifications=[] } = Astro.props;
-function fmt(d?:string){ if(!d) return ''; const dt=new Date(d); return dt.toLocaleDateString('en-US',{year:'numeric',month:'short'}); }
+function fmt(d?: string | null){ if(!d) return ''; const dt=new Date(d); return dt.toLocaleDateString('en-US',{year:'numeric',month:'short'}); }
 ---
 <section class="journey section" id="journey">
   <div class="container">

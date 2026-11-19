@@ -168,3 +168,29 @@ img,video{max-width:100%;display:block}button{font-family:inherit;cursor:pointer
 .page-subtitle{font-size:14px;color:#A9A1B1;margin-top:.25rem}
 .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;padding:4rem 2rem;text-align:center;color:#6B6475;border:1px dashed #35303D;border-radius:12px}
 .empty-state h3{font-size:16px;color:#A9A1B1}
+
+/* ── Admin utility layout classes ────────────────────────────────────────── */
+/* Replace repeated inline style="..." attributes in admin pages */
+
+/* Two-column responsive grid */
+.admin-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+/* Full-width span inside a grid */
+.admin-col-full{grid-column:1/-1}
+/* Common card/panel box */
+.admin-card{background:#19161F;border:1px solid #35303D;border-radius:12px;padding:1.5rem}
+.admin-card__title{font-size:16px;font-weight:600;margin-bottom:1.25rem;color:#F5F0FA}
+/* Two-column layout: form panel left, list right */
+.admin-split{display:grid;grid-template-columns:340px 1fr;gap:2rem;align-items:start}
+/* Flex row with gap */
+.flex-row{display:flex;align-items:center;gap:.75rem}
+.flex-row--end{display:flex;align-items:center;gap:.75rem;justify-content:flex-end}
+/* Full-width button */
+.btn--full{width:100%;justify-content:center}
+/* Muted small text */
+.text-muted{font-size:12px;color:#6B6475}
+.text-sm{font-size:13px}
+/* Checkbox label row */
+.check-label{display:flex;align-items:center;gap:.5rem;cursor:pointer}
+/* Section form max-width */
+.admin-form{max-width:720px}
+.admin-form--sm{max-width:600px}

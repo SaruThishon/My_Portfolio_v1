@@ -1,6 +1,7 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import { BACKEND_URL as API } from '../../lib/config';
+import { generateCsrfToken, verifyCsrfToken } from '../../lib/csrf';
 const session = Astro.cookies.get('session_token');
 const h: Record<string, string> = { Cookie: `session_token=${session?.value ?? ''}`, 'Content-Type': 'application/json' };
 let profile: any = null;
@@ -8,8 +9,13 @@ let error = '';
 let success = '';
 try { const r = await fetch(`${API}/api/profile`, { headers: h }); if (r.ok) profile = await r.json(); } catch { error='Connection error'; }
 
+const csrfToken = generateCsrfToken(Astro.cookies);
+
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
+  if (!verifyCsrfToken(Astro.cookies, form.get('_csrf') as string)) {
+    error = 'Invalid request. Please refresh and try again.';
+  }
   const payload: any = {};
   ['full_name','professional_title','hero_headline','hero_description','about_bio','location','availability_text','email','github_url','linkedin_url','twitter_url','website_url','profile_image_url'].forEach(k => { const v = form.get(k) as string; if (v !== null) payload[k] = v || null; });
   payload.is_available     = form.get('is_available') === 'on';
@@ -29,13 +35,14 @@ if (Astro.request.method === 'POST') {
     {error && <div class="alert alert--error">{error}</div>}
     {success && <div class="alert alert--success">{success}</div>}
     {profile && (
-    <form method="POST" style="max-width:720px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+    <form method="POST" class="admin-form">
+      <input type="hidden" name="_csrf" value={csrfToken} />
+      <div class="admin-grid-2">
         <div class="form-group"><label class="form-label">Full Name</label><input name="full_name" class="form-input" value={profile.full_name}/></div>
         <div class="form-group"><label class="form-label">Professional Title</label><input name="professional_title" class="form-input" value={profile.professional_title}/></div>
-        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Hero Headline</label><textarea name="hero_headline" class="form-input form-textarea" rows="2">{profile.hero_headline}</textarea></div>
-        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Hero Description</label><textarea name="hero_description" class="form-input form-textarea" rows="2">{profile.hero_description}</textarea></div>
-        <div class="form-group" style="grid-column:1/-1"><label class="form-label">About Bio</label><textarea name="about_bio" class="form-input form-textarea" rows="5">{profile.about_bio}</textarea></div>
+        <div class="form-group" class="admin-col-full"><label class="form-label">Hero Headline</label><textarea name="hero_headline" class="form-input form-textarea" rows="2">{profile.hero_headline}</textarea></div>
+        <div class="form-group" class="admin-col-full"><label class="form-label">Hero Description</label><textarea name="hero_description" class="form-input form-textarea" rows="2">{profile.hero_description}</textarea></div>
+        <div class="form-group" class="admin-col-full"><label class="form-label">About Bio</label><textarea name="about_bio" class="form-input form-textarea" rows="5">{profile.about_bio}</textarea></div>
         <div class="form-group"><label class="form-label">Location</label><input name="location" class="form-input" value={profile.location??''}/></div>
         <div class="form-group"><label class="form-label">Availability Text</label><input name="availability_text" class="form-input" value={profile.availability_text}/></div>
         <div class="form-group"><label class="form-label">Email</label><input name="email" class="form-input" type="email" value={profile.email??''}/></div>
@@ -44,13 +51,13 @@ if (Astro.request.method === 'POST') {
         <div class="form-group"><label class="form-label">Twitter / X URL</label><input name="twitter_url" class="form-input" value={profile.twitter_url??''} placeholder="https://x.com/yourhandle"/></div>
         <div class="form-group"><label class="form-label">Instagram URL</label><input name="instagram_url" class="form-input" value={profile.extra_social_links?.instagram??''} placeholder="https://instagram.com/yourhandle"/></div>
         <div class="form-group"><label class="form-label">Website URL</label><input name="website_url" class="form-input" value={profile.website_url??''}/></div>
-        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Profile Image URL</label><input name="profile_image_url" class="form-input" value={profile.profile_image_url??''} placeholder="https://... or upload via Media"/></div>
-        <div class="form-group" style="grid-column:1/-1">
-          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+        <div class="form-group" class="admin-col-full"><label class="form-label">Profile Image URL</label><input name="profile_image_url" class="form-input" value={profile.profile_image_url??''} placeholder="https://... or upload via Media"/></div>
+        <div class="form-group" class="admin-col-full">
+          <label class="check-label">
             <input type="checkbox" name="is_available" checked={profile.is_available} style="accent-color:#B794F6;width:16px;height:16px"/>
             <span class="form-label" style="margin:0">Available for opportunities</span>
           </label>
-          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;margin-top:.6rem">
+          <label class="check-label" style="margin-top:.6rem">
             <input type="checkbox" name="is_online_public" checked={profile.is_online_public} style="accent-color:#B794F6;width:16px;height:16px"/>
             <span class="form-label" style="margin:0">Show as Online on hero (green dot)</span>
           </label>

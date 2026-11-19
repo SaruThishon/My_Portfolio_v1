@@ -38,7 +38,9 @@ async def login(
     user = result.scalar_one_or_none()
 
     if not user or not verify_password(data.password, user.hashed_password):
-        await log_activity(db, "login_failed", ip_address=ip, description=f"Failed login for: {data.username}")
+        # Truncate to avoid logging passwords accidentally typed into the username field
+        safe_hint = data.username[:3] + "***" if len(data.username) > 3 else "***"
+        await log_activity(db, "login_failed", ip_address=ip, description=f"Failed login for: {safe_hint}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     if not user.is_active:

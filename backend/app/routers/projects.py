@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, or_
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -16,9 +15,7 @@ router = APIRouter(prefix="/projects", tags=["Projects"])
 
 
 async def get_project_or_404(db, project_id):
-    result = await db.execute(
-        select(Project).where(Project.id == project_id).options(selectinload(Project.images))
-    )
+    result = await db.execute(select(Project).where(Project.id == project_id))
     p = result.scalar_one_or_none()
     if not p:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -38,7 +35,6 @@ async def get_published_projects(db: AsyncSession = Depends(get_db)):
 async def get_published_project_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(Project).where(Project.slug == slug, Project.status == "published")
-        .options(selectinload(Project.images))
     )
     p = result.scalar_one_or_none()
     if not p:
@@ -74,10 +70,7 @@ async def create_project(
     await db.commit()
     await db.refresh(project)
     await log_activity(db, "project_created", "project", str(project.id), f"Created: {project.title}")
-    result = await db.execute(
-        select(Project).where(Project.id == project.id).options(selectinload(Project.images))
-    )
-    return result.scalar_one()
+    return project
 
 
 @router.get("/{project_id}", response_model=ProjectOut)
@@ -106,10 +99,7 @@ async def update_project(
     await db.commit()
     await db.refresh(project)
     await log_activity(db, "project_updated", "project", str(project.id))
-    result = await db.execute(
-        select(Project).where(Project.id == project.id).options(selectinload(Project.images))
-    )
-    return result.scalar_one()
+    return project
 
 
 @router.patch("/{project_id}/status", response_model=ProjectOut)
@@ -124,10 +114,7 @@ async def update_project_status(
     await db.commit()
     await db.refresh(project)
     await log_activity(db, f"project_{data.status}", "project", str(project.id))
-    result = await db.execute(
-        select(Project).where(Project.id == project.id).options(selectinload(Project.images))
-    )
-    return result.scalar_one()
+    return project
 
 
 @router.patch("/{project_id}/feature")

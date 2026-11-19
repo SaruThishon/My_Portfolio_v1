@@ -9,29 +9,31 @@ import Contact from '../components/Contact.astro';
 import ResumeSection from '../components/ResumeSection.astro';
 import SectionDivider from '../components/SectionDivider.astro';
 import { getProfile, getPublishedProjects, getSkills, getEducation, getExperience, getCertifications, getActiveResume } from '../lib/api';
+import type { Profile } from '../types/api';
 
 const [profile, projects, skills, education, experience, certifications, resume] = await Promise.all([
   getProfile(), getPublishedProjects(), getSkills(), getEducation(), getExperience(), getCertifications(), getActiveResume(),
 ]);
 
-const p = profile || {};
-const title = `${p.full_name || 'Portfolio'}`;
+// Use typed profile with safe fallbacks
+const p: Partial<Profile> = profile ?? {};
+const title = `${p.full_name || 'Portfolio'} – ${p.professional_title || 'Software Engineer'}`;
 const description = p.hero_description || 'Personal portfolio of a Software Engineer specializing in Python, SQL, and Data Science.';
 ---
-<BaseLayout title={title} description={description} twitterUrl={p.twitter_url} instagramUrl={(p.extra_social_links as any)?.instagram}>
+<BaseLayout title={title} description={description} twitterUrl={p.twitter_url ?? undefined} instagramUrl={p.extra_social_links?.instagram}>
   <Hero
-    name={p.full_name}
-    title={p.professional_title}
-    description={p.hero_description}
-    profileImageUrl={p.profile_image_url}
-    githubUrl={p.github_url}
-    linkedinUrl={p.linkedin_url}
-    email={p.email}
-    updatedAt={p.updated_at}
+    name={p.full_name ?? undefined}
+    title={p.professional_title ?? undefined}
+    description={p.hero_description ?? undefined}
+    profileImageUrl={p.profile_image_url ?? undefined}
+    githubUrl={p.github_url ?? undefined}
+    linkedinUrl={p.linkedin_url ?? undefined}
+    email={p.email ?? undefined}
+    updatedAt={p.updated_at ?? undefined}
     isOnlinePublic={p.is_online_public ?? true}
   />
   <SectionDivider />
-  <About bio={p.about_bio} location={p.location} />
+  <About bio={p.about_bio ?? undefined} location={p.location ?? undefined} />
   <SectionDivider />
   <Projects projects={projects || []} />
   <SectionDivider />
@@ -41,7 +43,7 @@ const description = p.hero_description || 'Personal portfolio of a Software Engi
   <SectionDivider />
   <ResumeSection resumeUrl={(resume as any)?.file_url} updatedAt={(resume as any)?.uploaded_at} />
   <SectionDivider />
-  <Contact email={p.email} githubUrl={p.github_url} linkedinUrl={p.linkedin_url} />
+  <Contact email={p.email ?? undefined} githubUrl={p.github_url ?? undefined} linkedinUrl={p.linkedin_url ?? undefined} />
 </BaseLayout>
 
 <script>

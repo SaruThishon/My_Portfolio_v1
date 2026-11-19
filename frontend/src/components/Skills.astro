@@ -1,5 +1,5 @@
 ---
-interface Skill { id: string; name: string; category: string; icon_name?: string; proficiency?: string; is_visible: boolean; }
+import type { Skill } from '../types/api';
 interface Props { skills?: Skill[]; }
 const { skills = [] } = Astro.props;
 

@@ -34,8 +34,26 @@ class ProjectCreate(BaseModel):
     seo_description: Optional[str] = None
 
 
-class ProjectUpdate(ProjectCreate):
+class ProjectUpdate(BaseModel):
+    """Fully optional — only provided fields are updated. No silent wipes."""
     title: Optional[str] = None
+    slug: Optional[str] = None
+    short_description: Optional[str] = None
+    description: Optional[str] = None
+    problem_statement: Optional[str] = None
+    solution: Optional[str] = None
+    architecture_notes: Optional[str] = None
+    challenges: Optional[str] = None
+    results: Optional[str] = None
+    category: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+    github_url: Optional[str] = None
+    demo_url: Optional[str] = None
+    technologies: Optional[List[str]] = None
+    is_featured: Optional[bool] = None
+    display_order: Optional[int] = None
+    seo_title: Optional[str] = None
+    seo_description: Optional[str] = None
 
 
 class ProjectStatusUpdate(BaseModel):

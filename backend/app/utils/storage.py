@@ -8,7 +8,6 @@ import io
 import os
 import uuid
 from pathlib import Path
-from typing import Tuple
 
 from PIL import Image
 from app.core.config import settings

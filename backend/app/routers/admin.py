@@ -46,10 +46,25 @@ async def get_dashboard_stats(
     db: AsyncSession = Depends(get_db),
     current_admin=Depends(get_current_admin),
 ):
-    total_projects = (await db.execute(select(func.count()).select_from(Project))).scalar()
-    published_projects = (await db.execute(select(func.count()).where(Project.status == "published"))).scalar()
-    new_enquiries = (await db.execute(select(func.count()).where(Enquiry.status == "new"))).scalar()
-    total_enquiries = (await db.execute(select(func.count()).select_from(Enquiry))).scalar()
+    # Single query with conditional aggregation instead of 4 separate COUNTs
+    from sqlalchemy import case
+    proj_row = (await db.execute(
+        select(
+            func.count().label("total"),
+            func.count(case((Project.status == "published", 1))).label("published"),
+        ).select_from(Project)
+    )).one()
+    total_projects = proj_row.total
+    published_projects = proj_row.published
+
+    enq_row = (await db.execute(
+        select(
+            func.count().label("total"),
+            func.count(case((Enquiry.status == "new", 1))).label("new"),
+        ).select_from(Enquiry)
+    )).one()
+    total_enquiries = enq_row.total
+    new_enquiries = enq_row.new
 
     recent_enquiries_result = await db.execute(
         select(Enquiry).order_by(Enquiry.created_at.desc()).limit(5)
