@@ -9,8 +9,8 @@
   display:flex;
   flex-direction:column;
   justify-content:center;
-  overflow:hidden;
-  padding-top:72px; /* nav height */
+  overflow-x:hidden; /* prevent horizontal scroll from orbs; NOT overflow:hidden — that clips the scroll indicator */
+  padding-top:72px; /* nav height offset */
 }
 
 /* ── Backgrounds ────────────────────────────── */
@@ -40,16 +40,18 @@
   grid-template-columns:32vw 1fr;
   align-items:stretch;
   padding-inline:0;
+  padding-block:0; /* portrait fills full height — no extra block padding */
   gap:0;
 }
 
 /* ── Portrait column (LEFT) ─────────────────── */
 .hero__portrait-col{
   position:relative;
-  /* Fill the grid row height fully */
-  min-height:calc(100svh - 72px);
+  /* Fills from nav bottom to viewport bottom */
+  height:calc(100svh - 72px);
+  min-height:480px;
   display:flex;
-  align-items:flex-end; /* image anchored to bottom so feet aren't cut */
+  align-items:flex-end; /* anchor image to bottom so feet show */
   justify-content:center;
   /* Fade: top edge (overlaps nav), bottom, and right edge into bg */
   -webkit-mask-image:
@@ -89,11 +91,10 @@
   .hero__portrait-enter .hero__portrait-img-wrap{animation:none;opacity:1;transform:none}
 }
 
-/* Image: fills width, tall as possible */
+/* Image: fills full portrait column */
 .hero__portrait-img{
   width:100%;
   height:100%;
-  max-height:calc(100svh - 72px);
   object-fit:cover;
   object-position:top center;
   display:block;
@@ -103,6 +104,7 @@
 .hero__content{
   min-width:0;
   padding-inline:clamp(2.5rem,4vw,5rem) clamp(1.5rem,3vw,3rem);
+  padding-block:clamp(2rem,4vw,3.5rem); /* breathing room top+bottom */
   display:flex;
   flex-direction:column;
   justify-content:center;
@@ -163,27 +165,97 @@
   .hero__container--with-image{grid-template-columns:30vw 1fr}
   .hero__name-display{font-size:clamp(3rem,7vw,6rem)}
 }
+/* ── Tablet portrait (601–860px): stack vertically ─────── */
 @media(max-width:860px){
-  .hero__container--with-image{grid-template-columns:1fr;padding-inline:clamp(1.25rem,5vw,2rem)}
-  .hero__content{padding-inline:0;justify-content:flex-start;padding-top:1.5rem}
-  .hero__portrait-col{min-height:50vh;max-width:360px;margin-inline:auto;align-items:center;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 10%,black 88%,transparent 100%),linear-gradient(to right,transparent 0%,black 8%,black 92%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0%,black 10%,black 88%,transparent 100%),linear-gradient(to right,transparent 0%,black 8%,black 92%,transparent 100%)}
-  .hero__portrait-img{max-height:50vh;width:100%;height:100%;object-fit:cover;object-position:top center}
+  .hero__container--with-image{
+    grid-template-columns:1fr;
+    padding-inline:clamp(1.25rem,5vw,2rem);
+    padding-block:0;
+  }
+  .hero__content{
+    padding-inline:0;
+    padding-block:1.5rem 2.5rem;
+    justify-content:flex-start;
+  }
+  .hero__portrait-col{
+    height:48vh;
+    min-height:260px;
+    max-width:380px;
+    margin-inline:auto;
+    align-items:center;
+    -webkit-mask-image:
+      linear-gradient(to bottom,transparent 0%,black 10%,black 88%,transparent 100%),
+      linear-gradient(to right,transparent 0%,black 8%,black 92%,transparent 100%);
+    mask-image:
+      linear-gradient(to bottom,transparent 0%,black 10%,black 88%,transparent 100%),
+      linear-gradient(to right,transparent 0%,black 8%,black 92%,transparent 100%);
+  }
+  .hero__portrait-img{max-height:48vh}
   .hero__description{max-width:100%}
   .hero__name-display{font-size:clamp(3rem,10vw,5rem)}
 }
+
+/* ── Mobile (≤600px): portrait top half, content below ─── */
 @media(max-width:600px){
-  .hero{padding-top:0;justify-content:flex-start;min-height:100svh;height:auto}
+  /* Keep padding-top:72px so content clears the fixed nav */
+  .hero{
+    justify-content:flex-start;
+    min-height:100svh;
+    height:auto;
+  }
   .hero__scroll{display:none}
-  .hero__container--with-image{display:flex;flex-direction:column;padding-inline:0;padding-block:0;min-height:100svh;height:auto}
-  .hero__portrait-col{position:relative;width:100%;height:52vh;min-height:220px;max-width:100%;margin-inline:0;flex-shrink:0;align-items:flex-start;-webkit-mask-image:linear-gradient(to bottom,black 0%,black 60%,transparent 100%);mask-image:linear-gradient(to bottom,black 0%,black 60%,transparent 100%)}
-  .hero__portrait-img-wrap{position:absolute;inset:0;justify-content:center;padding-right:0;align-items:flex-start}
-  .hero__portrait-img{width:100%;height:100%;max-height:none;object-fit:cover;object-position:top center}
-  .hero__content,.hero__container--with-image .hero__content{position:relative;z-index:2;flex:1;padding-top:1.25rem !important;padding-bottom:3rem !important;padding-left:clamp(1.25rem,5vw,1.75rem) !important;padding-right:clamp(1.25rem,5vw,1.75rem) !important;margin-top:0 !important;max-width:100% !important;justify-content:flex-start}
+
+  .hero__container--with-image{
+    display:flex;
+    flex-direction:column;
+    padding-inline:0;
+    padding-block:0;
+    min-height:calc(100svh - 72px);
+    height:auto;
+  }
+
+  /* Portrait: top ~45% of remaining viewport */
+  .hero__portrait-col{
+    position:relative;
+    width:100%;
+    height:45vh;
+    min-height:200px;
+    max-width:100%;
+    margin-inline:0;
+    flex-shrink:0;
+    align-items:flex-start;
+    -webkit-mask-image:linear-gradient(to bottom,black 0%,black 55%,transparent 100%);
+    mask-image:linear-gradient(to bottom,black 0%,black 55%,transparent 100%);
+  }
+  .hero__portrait-img-wrap{
+    position:absolute;
+    inset:0;
+    align-items:flex-start;
+    justify-content:center;
+  }
+  .hero__portrait-img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    object-position:top center;
+  }
+
+  /* Content: flows naturally below portrait */
+  .hero__content,
+  .hero__container--with-image .hero__content{
+    flex:1;
+    padding-top:1.5rem;
+    padding-bottom:2.5rem;
+    padding-left:clamp(1.25rem,5vw,1.75rem);
+    padding-right:clamp(1.25rem,5vw,1.75rem);
+    justify-content:flex-start;
+  }
+
   .hero__name-display{font-size:clamp(2.4rem,12vw,3.5rem)}
   .hero__description{max-width:100%;font-size:.9375rem;margin-top:1rem}
   .hero__actions{gap:.625rem;margin-top:1.25rem}
   .btn{padding:.6em 1.1em;font-size:.875rem}
   .hero__meta{margin-top:.5rem}
   .hero__social{margin-top:1rem;gap:.875rem}
-  .hero__title-wrap{margin-top:.35rem;overflow:visible}
+  .hero__title-wrap{margin-top:.35rem}
 }
