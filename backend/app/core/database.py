@@ -14,6 +14,9 @@ _pool_kwargs = (
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.ENVIRONMENT == "development",
+    # Supabase transaction pooler (port 6543) uses pgbouncer which does not
+    # support prepared statements. Setting cache size to 0 disables them.
+    connect_args={"statement_cache_size": 0},
     **_pool_kwargs,
 )
 
