@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     ADMIN_EMAIL: str = "admin@portfolio.local"
     ADMIN_PASSWORD: str = "changeme"
 
-    # Storage
+    # Storage — "local" for dev, "s3" for production (Supabase Storage)
     STORAGE_PROVIDER: str = "local"  # local | s3
     STORAGE_ENDPOINT: str = "http://localhost:9000"
     STORAGE_ACCESS_KEY: str = "minioadmin"
