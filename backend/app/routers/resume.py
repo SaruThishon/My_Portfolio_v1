@@ -11,7 +11,6 @@ from app.utils.activity import log_activity
 router = APIRouter(prefix="/resume", tags=["Resume"])
 
 ALLOWED_RESUME_TYPES = {"application/pdf"}
-MAX_RESUME_SIZE = 20 * 1024 * 1024  # 20 MB
 
 
 @router.get("", response_model=list[ResumeOut])
@@ -35,13 +34,12 @@ async def upload_resume(
     db: AsyncSession = Depends(get_db),
     current_admin=Depends(get_current_admin),
 ):
+    # Early content-type check before reading the full body
     if file.content_type not in ALLOWED_RESUME_TYPES:
         raise HTTPException(status_code=400, detail="Only PDF files are allowed")
 
     content = await file.read()
-    if len(content) > MAX_RESUME_SIZE:
-        raise HTTPException(status_code=400, detail="File too large (max 20 MB)")
-
+    # Size validated inside upload_file → validate_file (MAX_DOC_SIZE = 20 MB)
     result = await upload_file(content, file.filename or "resume.pdf", "application/pdf", folder="resume")
 
     # Get current max version

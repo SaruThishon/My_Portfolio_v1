@@ -1,6 +1,6 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
-const API='http://localhost:8000';
+import { BACKEND_URL as API } from '../../lib/config';
 const session=Astro.cookies.get('session_token');
 const h: Record<string, string> = {Cookie:`session_token=${session?.value??''}`,'Content-Type':'application/json'};
 let settings:any={}; let error=''; let success='';
@@ -48,9 +48,11 @@ document.getElementById('publish-btn')?.addEventListener('click', async () => {
   try {
     // The trigger-build endpoint uses a shared secret, not a session cookie.
     // It's safe to call directly — no authenticated session needed.
-    const r = await fetch('http://localhost:8000/api/admin/trigger-build', {
+    // Route through the SSR proxy so the build secret stays server-side
+    const r = await fetch('/api/proxy', {
       method: 'POST',
-      headers: { 'x-build-secret': 'dev_build_hook_secret' },
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: 'POST', path: '/api/admin/trigger-build' }),
     });
     const d = await r.json();
     status.textContent = d.message || (d.triggered ? '✓ Build triggered!' : '✗ Trigger failed');

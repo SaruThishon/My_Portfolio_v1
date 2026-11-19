@@ -8,6 +8,7 @@
  * where there is no cross-origin restriction.
  */
 import type { APIRoute } from 'astro';
+import { BACKEND_URL } from '../../lib/config';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   const sessionToken = cookies.get('session_token')?.value;
@@ -23,7 +24,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // Forward the multipart/form-data body directly to FastAPI
     const formData = await request.formData();
 
-    const response = await fetch('http://localhost:8000/api/resume/upload', {
+    const response = await fetch(`${BACKEND_URL}/api/resume/upload`, {
       method: 'POST',
       headers: {
         // Forward the session cookie server-side — no cross-origin restrictions here

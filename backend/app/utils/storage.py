@@ -3,6 +3,7 @@ Storage utility.
 STORAGE_PROVIDER=local  → saves files to ./uploads/ directory (local dev)
 STORAGE_PROVIDER=s3     → uploads to S3-compatible storage (Cloudflare R2, MinIO)
 """
+import asyncio
 import io
 import os
 import uuid
@@ -22,9 +23,29 @@ IMAGE_MAX_WIDTH = 1920
 
 LOCAL_STORAGE_DIR = Path(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))) / "uploads"
 
+# Cached S3 client — created once on first use to avoid per-request overhead
+_s3_client = None
+
 
 def _provider() -> str:
     return getattr(settings, 'STORAGE_PROVIDER', 'local')
+
+
+def _get_s3_client():
+    """Return a cached boto3 S3 client, creating it on first call."""
+    global _s3_client
+    if _s3_client is None:
+        import boto3
+        from botocore.client import Config
+        _s3_client = boto3.client(
+            "s3",
+            endpoint_url=settings.STORAGE_ENDPOINT,
+            aws_access_key_id=settings.STORAGE_ACCESS_KEY,
+            aws_secret_access_key=settings.STORAGE_SECRET_KEY,
+            region_name=settings.STORAGE_REGION,
+            config=Config(signature_version="s3v4"),
+        )
+    return _s3_client
 
 
 def build_public_url(object_key: str) -> str:
@@ -122,13 +143,12 @@ async def upload_file(content: bytes, original_filename: str, content_type: str,
 
 
 async def _upload_s3(content: bytes, key: str, content_type: str) -> None:
-    import boto3
-    from botocore.client import Config
-    s3 = boto3.client("s3", endpoint_url=settings.STORAGE_ENDPOINT,
-        aws_access_key_id=settings.STORAGE_ACCESS_KEY, aws_secret_access_key=settings.STORAGE_SECRET_KEY,
-        region_name=settings.STORAGE_REGION, config=Config(signature_version="s3v4"))
-    s3.put_object(Bucket=settings.STORAGE_BUCKET, Key=key, Body=content,
-        ContentType=content_type, CacheControl="public, max-age=31536000, immutable")
+    s3 = _get_s3_client()
+    await asyncio.to_thread(
+        s3.put_object,
+        Bucket=settings.STORAGE_BUCKET, Key=key, Body=content,
+        ContentType=content_type, CacheControl="public, max-age=31536000, immutable",
+    )
 
 
 async def delete_file(stored_filename: str) -> None:
@@ -136,24 +156,16 @@ async def delete_file(stored_filename: str) -> None:
         f = LOCAL_STORAGE_DIR / stored_filename
         if f.exists(): f.unlink()
     else:
-        import boto3
-        from botocore.client import Config
-        s3 = boto3.client("s3", endpoint_url=settings.STORAGE_ENDPOINT,
-            aws_access_key_id=settings.STORAGE_ACCESS_KEY, aws_secret_access_key=settings.STORAGE_SECRET_KEY,
-            region_name=settings.STORAGE_REGION, config=Config(signature_version="s3v4"))
-        s3.delete_object(Bucket=settings.STORAGE_BUCKET, Key=stored_filename)
+        s3 = _get_s3_client()
+        await asyncio.to_thread(s3.delete_object, Bucket=settings.STORAGE_BUCKET, Key=stored_filename)
 
 
 def ensure_bucket_exists() -> None:
     if _provider() == 'local':
         LOCAL_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
     else:
-        import boto3
-        from botocore.client import Config
         from botocore.exceptions import ClientError
-        s3 = boto3.client("s3", endpoint_url=settings.STORAGE_ENDPOINT,
-            aws_access_key_id=settings.STORAGE_ACCESS_KEY, aws_secret_access_key=settings.STORAGE_SECRET_KEY,
-            region_name=settings.STORAGE_REGION, config=Config(signature_version="s3v4"))
+        s3 = _get_s3_client()
         try:
             s3.head_bucket(Bucket=settings.STORAGE_BUCKET)
         except ClientError:

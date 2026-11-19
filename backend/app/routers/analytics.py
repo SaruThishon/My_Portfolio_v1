@@ -3,7 +3,7 @@ Analytics router — proxies Umami API calls to avoid exposing API keys to front
 When Umami is not configured, returns clearly-labeled empty data.
 """
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 import httpx
 from app.core.config import settings
 from app.core.security import get_current_admin
@@ -96,20 +96,4 @@ async def get_top_pages(
     return {"configured": True, "data": data}
 
 
-@router.get("/activity")
-async def get_recent_activity(db=None, current_admin=Depends(get_current_admin)):
-    """Returns recent admin activity log entries."""
-    from app.core.database import get_db
-    from app.models.activity import ActivityLog
-    from sqlalchemy import select
-    from fastapi import Depends
-    # We'll use a fresh db session here
-    return {"message": "Use /admin/activity-logs endpoint"}
-
-
-@router.get("/activity-logs")
-async def get_activity_logs(
-    limit: int = 20,
-    current_admin=Depends(get_current_admin),
-):
-    return {"message": "Activity logs available via /api/admin/activity-logs"}
+# Activity logs are served by /api/admin/activity-logs (admin.py router)

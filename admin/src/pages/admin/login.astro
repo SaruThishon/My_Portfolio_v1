@@ -1,5 +1,6 @@
 ---
 import '../../styles/admin.css';
+import { BACKEND_URL } from '../../lib/config';
 
 // If already logged in, redirect to dashboard
 const sessionToken = Astro.cookies.get('session_token');
@@ -13,19 +14,18 @@ if (Astro.request.method === 'POST') {
   const password = form.get('password') as string;
 
   try {
-    const res = await fetch('http://localhost:8000/api/auth/login', {
+    const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
     });
     const data = await res.json();
 
-    if (res.ok && data.message === 'Login successful' && data.token) {
-      // Set the session cookie directly from the token returned in the response body.
-      // We cannot rely on res.headers.get('set-cookie') in Astro SSR because
-      // Node.js fetch (undici) strips the Set-Cookie header from response objects
-      // for security reasons. Reading the token from the JSON body is the correct approach.
-      Astro.cookies.set('session_token', data.token, {
+    // Token is returned in X-Session-Token header (not body) — safer than body exposure.
+    // Node.js fetch (undici) allows reading custom response headers in SSR.
+    const token = res.headers.get('x-session-token');
+    if (res.ok && data.message === 'Login successful' && token) {
+      Astro.cookies.set('session_token', token, {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',

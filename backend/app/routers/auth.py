@@ -84,7 +84,10 @@ async def login(
         path="/",
     )
 
-    return {"message": "Login successful", "token": token, "user": AdminUserOut.model_validate(user)}
+    # Token is set as HttpOnly cookie above — do NOT return it in the body.
+    # login.astro reads it via a custom X-Session-Token response header (SSR only).
+    response.headers["X-Session-Token"] = token
+    return {"message": "Login successful", "user": AdminUserOut.model_validate(user)}
 
 
 @router.post("/logout")

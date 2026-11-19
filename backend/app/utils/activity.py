@@ -30,6 +30,6 @@ async def log_activity(
             ip_address=ip_address,
         )
         db.add(log)
-        await db.commit()
+        await db.flush()  # write to transaction without committing — router commits atomically
     except Exception as e:
         logger.error(f"Activity log failed for action '{action}': {e}")

@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from sqlalchemy import String, Boolean, DateTime, Text, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import ARRAY as SA_ARRAY
 from app.core.database import Base
 
@@ -35,7 +35,6 @@ class Project(Base):
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     images: Mapped[list["ProjectImage"]] = relationship("ProjectImage", back_populates="project", cascade="all, delete-orphan", order_by="ProjectImage.display_order")
-    project_skills: Mapped[list["ProjectSkill"]] = relationship("ProjectSkill", back_populates="project", cascade="all, delete-orphan")
 
 
 class ProjectImage(Base):

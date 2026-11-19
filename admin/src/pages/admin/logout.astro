@@ -1,11 +1,12 @@
 ---
+import { BACKEND_URL } from '../../lib/config';
 // Handle POST logout — call API, clear cookie, redirect to login
 if (Astro.request.method === 'POST') {
   const sessionToken = Astro.cookies.get('session_token');
   if (sessionToken?.value) {
     try {
       // Tell the backend to invalidate this session in the database
-      await fetch('http://localhost:8000/api/auth/logout', {
+      await fetch(`${BACKEND_URL}/api/auth/logout`, {
         method: 'POST',
         headers: {
           'Cookie': `session_token=${sessionToken.value}`,

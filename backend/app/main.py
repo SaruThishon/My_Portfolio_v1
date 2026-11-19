@@ -1,10 +1,10 @@
 import logging
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from pathlib import Path
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -24,13 +24,28 @@ limiter = Limiter(key_func=get_remote_address)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting Portfolio API...")
-    # Ensure MinIO bucket exists on startup (local dev)
+
+    # 1. Clean up expired sessions
+    try:
+        from sqlalchemy import delete
+        from app.models.auth import AdminSession
+        from app.core.database import AsyncSessionLocal
+        async with AsyncSessionLocal() as db:
+            now = datetime.now(timezone.utc)
+            await db.execute(delete(AdminSession).where(AdminSession.expires_at < now))
+            await db.commit()
+        logger.info("Expired sessions cleaned up.")
+    except Exception as e:
+        logger.warning(f"Session cleanup failed: {e}")
+
+    # 2. Ensure storage bucket exists (local dev / S3)
     try:
         from app.utils.storage import ensure_bucket_exists
         ensure_bucket_exists()
         logger.info("Storage bucket verified.")
     except Exception as e:
         logger.warning(f"Storage not available: {e}")
+
     yield
     logger.info("Shutting down Portfolio API...")
     await engine.dispose()
@@ -57,13 +72,6 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "X-Build-Secret"],
 )
-
-# Apply rate limiting to public endpoints
-@app.middleware("http")
-async def add_rate_limit_headers(request: Request, call_next):
-    response = await call_next(request)
-    return response
-
 
 # Register all routers under /api prefix
 API_PREFIX = "/api"

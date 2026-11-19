@@ -3,6 +3,7 @@
  * Same reasoning as upload-resume.ts — avoids cross-origin cookie issue.
  */
 import type { APIRoute } from 'astro';
+import { BACKEND_URL } from '../../lib/config';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   const sessionToken = cookies.get('session_token')?.value;
@@ -17,7 +18,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     const formData = await request.formData();
 
-    const response = await fetch('http://localhost:8000/api/media/upload', {
+    const response = await fetch(`${BACKEND_URL}/api/media/upload`, {
       method: 'POST',
       headers: {
         Cookie: `session_token=${sessionToken}`,

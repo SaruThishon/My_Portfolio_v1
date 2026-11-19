@@ -62,30 +62,21 @@ async def get_current_admin(
     token_hash = hash_session_token(session_token)
     now = datetime.now(timezone.utc)
 
+    # Single join query instead of two separate queries
     result = await db.execute(
-        select(AdminSession)
+        select(AdminUser)
+        .join(AdminSession, AdminSession.user_id == AdminUser.id)
         .where(AdminSession.token_hash == token_hash)
         .where(AdminSession.expires_at > now)
         .where(AdminSession.is_valid == True)
-    )
-    session = result.scalar_one_or_none()
-
-    if not session:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Session expired or invalid",
-        )
-
-    # Fetch admin user
-    result = await db.execute(
-        select(AdminUser).where(AdminUser.id == session.user_id)
+        .where(AdminUser.is_active == True)
     )
     admin = result.scalar_one_or_none()
 
-    if not admin or not admin.is_active:
+    if not admin:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found or inactive",
+            detail="Session expired or invalid",
         )
 
     return admin

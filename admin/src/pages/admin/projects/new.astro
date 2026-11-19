@@ -1,5 +1,6 @@
 ---
 import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { BACKEND_URL } from '../../../lib/config';
 
 let error = '';
 
@@ -18,7 +19,7 @@ if (Astro.request.method === 'POST') {
     seo_title: form.get('seo_title') || null, seo_description: form.get('seo_description') || null,
   };
   try {
-    const res = await fetch('http://localhost:8000/api/projects', {
+    const res = await fetch(`${BACKEND_URL}/api/projects`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Cookie: `session_token=${sessionVal}` },
       body: JSON.stringify(payload),

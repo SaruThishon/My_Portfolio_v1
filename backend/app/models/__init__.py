@@ -1,7 +1,7 @@
 from app.models.auth import AdminUser, AdminSession
 from app.models.profile import Profile
 from app.models.projects import Project, ProjectImage
-from app.models.skills import Skill, ProjectSkill
+from app.models.skills import Skill
 from app.models.education import Education
 from app.models.experience import Experience
 from app.models.certifications import Certification
@@ -15,7 +15,7 @@ __all__ = [
     "AdminUser", "AdminSession",
     "Profile",
     "Project", "ProjectImage",
-    "Skill", "ProjectSkill",
+    "Skill",
     "Education",
     "Experience",
     "Certification",

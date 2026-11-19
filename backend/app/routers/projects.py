@@ -93,7 +93,14 @@ async def update_project(
     project = await get_project_or_404(db, project_id)
     update_data = data.model_dump(exclude_unset=True)
     if "title" in update_data and "slug" not in update_data:
-        update_data["slug"] = make_slug(update_data["title"])
+        new_slug = make_slug(update_data["title"])
+        # Check uniqueness — exclude the current project
+        existing = await db.execute(
+            select(Project).where(Project.slug == new_slug, Project.id != project.id)
+        )
+        if existing.scalar_one_or_none():
+            new_slug = unique_slug(update_data["title"])
+        update_data["slug"] = new_slug
     for k, v in update_data.items():
         setattr(project, k, v)
     await db.commit()

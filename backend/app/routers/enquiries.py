@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -9,7 +8,6 @@ from app.core.security import get_current_admin
 from app.models.enquiries import Enquiry
 from app.schemas.enquiries import EnquirySubmit, EnquiryStatusUpdate, EnquiryOut
 from app.utils.activity import log_activity
-from app.utils.email import send_enquiry_notification, send_enquiry_acknowledgement
 
 router = APIRouter(prefix="/enquiries", tags=["Enquiries"])
 
@@ -25,14 +23,6 @@ async def submit_enquiry(data: EnquirySubmit, request: Request, db: AsyncSession
     db.add(enquiry)
     await db.commit()
     await db.refresh(enquiry)
-
-    # Fire emails in background (don't block response)
-    enquiry_dict = {
-        "name": data.name, "email": data.email, "subject": data.subject,
-        "enquiry_type": data.enquiry_type, "message": data.message,
-    }
-    asyncio.create_task(send_enquiry_notification(enquiry_dict))
-    asyncio.create_task(send_enquiry_acknowledgement(enquiry_dict))
 
     return {"message": "Your message has been received. I'll get back to you soon!", "id": str(enquiry.id)}
 

@@ -1,6 +1,6 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
-const API = 'http://localhost:8000';
+import { BACKEND_URL as API } from '../../lib/config';
 const session = Astro.cookies.get('session_token');
 const h: Record<string, string> = { Cookie: `session_token=${session?.value ?? ''}` };
 let resumes: any[] = [];

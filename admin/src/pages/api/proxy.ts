@@ -9,6 +9,7 @@
  * cookie restrictions between localhost:4322 (admin) and localhost:8000 (backend).
  */
 import type { APIRoute } from 'astro';
+import { BACKEND_URL } from '../../lib/config';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   const sessionToken = cookies.get('session_token')?.value;
@@ -53,7 +54,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       fetchOptions.body = JSON.stringify(body);
     }
 
-    const response = await fetch(`http://localhost:8000${path}`, fetchOptions);
+    // Inject build secret server-side for trigger-build endpoint
+    if (path === '/api/admin/trigger-build') {
+      (fetchOptions.headers as Record<string, string>)['x-build-secret'] =
+        (import.meta.env.BUILD_HOOK_SECRET as string) ?? 'dev_build_hook_secret';
+    }
+
+    const response = await fetch(`${BACKEND_URL}${path}`, fetchOptions);
 
     // For 204 No Content, return empty body
     if (response.status === 204) {
