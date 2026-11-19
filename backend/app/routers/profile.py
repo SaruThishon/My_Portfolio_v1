@@ -13,12 +13,13 @@ router = APIRouter(prefix="/profile", tags=["Profile"])
 
 
 async def get_or_create_profile(db: AsyncSession) -> Profile:
-    result = await db.execute(select(Profile))
-    profile = result.scalar_one_or_none()
+    # Use .first() — safe even if duplicates exist (never raises MultipleResultsFound).
+    # Order by updated_at so the most recently edited row is always returned.
+    result = await db.execute(select(Profile).order_by(Profile.updated_at.desc()))
+    profile = result.scalars().first()
     if profile:
         return profile
-    # No profile yet — create with defaults. Wrap in try/except to handle
-    # the rare race where two requests hit simultaneously (single-admin app).
+    # No profile row at all — create one with defaults.
     try:
         profile = Profile()
         db.add(profile)
@@ -26,8 +27,8 @@ async def get_or_create_profile(db: AsyncSession) -> Profile:
         await db.refresh(profile)
     except IntegrityError:
         await db.rollback()
-        result = await db.execute(select(Profile))
-        profile = result.scalar_one()
+        result = await db.execute(select(Profile).order_by(Profile.updated_at.desc()))
+        profile = result.scalars().first()
     return profile
 
 
