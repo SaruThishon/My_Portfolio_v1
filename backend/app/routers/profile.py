@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -13,12 +13,22 @@ router = APIRouter(prefix="/profile", tags=["Profile"])
 
 
 async def get_or_create_profile(db: AsyncSession) -> Profile:
-    # Use INSERT ... ON CONFLICT DO NOTHING to avoid race condition on concurrent requests.
-    # We attempt to insert a default profile row; if one already exists the insert is a no-op.
-    await db.execute(pg_insert(Profile).values().on_conflict_do_nothing())
-    await db.commit()
     result = await db.execute(select(Profile))
-    return result.scalar_one()
+    profile = result.scalar_one_or_none()
+    if profile:
+        return profile
+    # No profile yet — create with defaults. Wrap in try/except to handle
+    # the rare race where two requests hit simultaneously (single-admin app).
+    try:
+        profile = Profile()
+        db.add(profile)
+        await db.commit()
+        await db.refresh(profile)
+    except IntegrityError:
+        await db.rollback()
+        result = await db.execute(select(Profile))
+        profile = result.scalar_one()
+    return profile
 
 
 @router.get("", response_model=ProfileOut)
