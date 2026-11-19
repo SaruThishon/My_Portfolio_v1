@@ -1,7 +1,6 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import { BACKEND_URL as API } from '../../lib/config';
-import { generateCsrfToken, verifyCsrfToken } from '../../lib/csrf';
 const session = Astro.cookies.get('session_token');
 const h: Record<string, string> = { Cookie: `session_token=${session?.value ?? ''}`, 'Content-Type': 'application/json' };
 let profile: any = null;
@@ -9,13 +8,8 @@ let error = '';
 let success = '';
 try { const r = await fetch(`${API}/api/profile`, { headers: h }); if (r.ok) profile = await r.json(); } catch { error='Connection error'; }
 
-const csrfToken = generateCsrfToken(Astro.cookies);
-
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
-  if (!verifyCsrfToken(Astro.cookies, form.get('_csrf') as string)) {
-    error = 'Invalid request. Please refresh and try again.';
-  }
   const payload: any = {};
   ['full_name','professional_title','hero_headline','hero_description','about_bio','location','availability_text','email','github_url','linkedin_url','twitter_url','website_url','profile_image_url'].forEach(k => { const v = form.get(k) as string; if (v !== null) payload[k] = v || null; });
   payload.is_available     = form.get('is_available') === 'on';
@@ -36,7 +30,6 @@ if (Astro.request.method === 'POST') {
     {success && <div class="alert alert--success">{success}</div>}
     {profile && (
     <form method="POST" class="admin-form">
-      <input type="hidden" name="_csrf" value={csrfToken} />
       <div class="admin-grid-2">
         <div class="form-group"><label class="form-label">Full Name</label><input name="full_name" class="form-input" value={profile.full_name}/></div>
         <div class="form-group"><label class="form-label">Professional Title</label><input name="professional_title" class="form-input" value={profile.professional_title}/></div>

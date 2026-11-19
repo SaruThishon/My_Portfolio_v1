@@ -1,16 +1,11 @@
 ---
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { BACKEND_URL } from '../../../lib/config';
-import { generateCsrfToken, verifyCsrfToken } from '../../../lib/csrf';
 
 let error = '';
-const csrfToken = generateCsrfToken(Astro.cookies);
 
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
-  if (!verifyCsrfToken(Astro.cookies, form.get('_csrf') as string)) {
-    error = 'Invalid request. Please refresh and try again.';
-  }
   const session = Astro.cookies.get('session_token');
   const sessionVal = session?.value ?? '';
   const payload = {
@@ -45,7 +40,6 @@ if (Astro.request.method === 'POST') {
   <div class="admin-content">
     {error && <div class="alert alert--error">{error}</div>}
     <form method="POST" class="admin-form">
-      <input type="hidden" name="_csrf" value={csrfToken} />
       <div class="admin-grid-2">
         <div class="form-group" class="admin-col-full">
           <label class="form-label">Title *</label>
