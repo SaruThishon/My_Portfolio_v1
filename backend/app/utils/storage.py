@@ -61,7 +61,7 @@ def validate_file(content: bytes, content_type: str, is_document: bool = False) 
         raise ValueError(f"File exceeds maximum size of {max_size // (1024*1024)} MB")
 
 
-def process_image(content: bytes, content_type: str) -> Tuple[bytes, int, int]:
+def process_image(content: bytes, content_type: str) -> tuple[bytes, int, int]:
     img = Image.open(io.BytesIO(content))
 
     # Determine output format: keep PNG as PNG (preserves transparency),
