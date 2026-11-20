@@ -210,8 +210,7 @@
     flex-direction:column;
     padding-inline:0;
     padding-block:0;
-    min-height:calc(100svh - 72px);
-    height:auto;
+    height:auto; /* let content grow naturally — no min-height clipping */
   }
 
   /* Portrait: top ~45% of remaining viewport */
