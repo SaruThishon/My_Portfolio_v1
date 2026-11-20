@@ -1,116 +1,128 @@
-# Portfolio Platform
+﻿# My Portfolio Platform
 
-A complete full-stack personal portfolio + admin management platform.
+A full-stack personal portfolio and content management platform built from scratch.
+The public site is server-side rendered for real-time data, managed entirely through a private admin dashboard — no static rebuilds needed for content updates.
 
-## 🏗️ Architecture
+## Live
 
-| Layer | Technology | Port |
-|-------|-----------|------|
-| Public Portfolio | Astro 4 (SSG) | 4321 |
-| Admin Dashboard | Astro 4 (SSR) | 4322 |
-| Backend API | FastAPI + Python | 8000 |
-| Database | PostgreSQL (Docker) | 5435 |
-| Email trap | Mailpit (Docker) | 8025 |
-| Analytics | Umami (Docker) | 3001 |
+| App | URL |
+|-----|-----|
+| Portfolio | https://your-frontend.vercel.app |
+| Admin | https://your-admin.vercel.app |
+| API | https://your-backend.vercel.app |
 
-## 🚀 Quick Start (Local)
+## Architecture
 
-### 1. Prerequisites
-- Node.js 18+
-- Python 3.10+
-- Docker Desktop
-
-### 2. Start infrastructure
-
-```bash
-docker-compose up -d
+```
+Visitor                Admin
+   |                     |
+   v                     v
+Frontend (Astro SSR) Admin Dashboard (Astro SSR)
+   |                     |
+   +----------+----------+
+              |
+              v
+       Backend (FastAPI)
+              |
+       +------+------+
+       |             |
+  Supabase DB   Supabase Storage
+  (PostgreSQL)  (profile, projects,
+                 resume, media)
 ```
 
-### 3. Backend setup
+## Stack
 
-```bash
+| Layer | Technology |
+|-------|------------|
+| Public frontend | Astro 4 SSR + Vercel |
+| Admin dashboard | Astro 4 SSR + React + Vercel |
+| Backend API | FastAPI + Python 3.12 + Vercel Serverless |
+| Database | PostgreSQL via Supabase |
+| File storage | Supabase Storage (S3-compatible) |
+| ORM / Migrations | SQLAlchemy async + Alembic |
+| Auth | Argon2 password hashing + session tokens |
+
+## Repository Structure
+
+```
+MyPortfolio/
+├── frontend/          # Public-facing Astro SSR site (port 4321)
+├── admin/             # Private admin dashboard — Astro SSR (port 4322)
+├── backend/           # FastAPI REST API (port 8000)
+├── backups/           # DB + upload snapshots (git-ignored)
+├── backup.ps1         # One-command backup script
+├── .env.example       # Root env var reference
+└── README.md
+```
+
+## Local Development
+
+### Prerequisites
+- Python 3.12+
+- Node.js 20+
+- Docker (for PostgreSQL)
+- Git
+
+### 1 — Start PostgreSQL
+```powershell
+docker run -d `
+  --name portfolio-db `
+  -e POSTGRES_USER=portfolio_user `
+  -e POSTGRES_PASSWORD=portfolio_pass `
+  -e POSTGRES_DB=portfolio_db `
+  -p 5435:5432 `
+  postgres:16
+```
+
+### 2 — Backend
+```powershell
 cd backend
+python -m venv venv
+.\venv\Scripts\activate
 pip install -r requirements.txt
-
-# Run database migrations
+copy .env.example .env   # then fill in values
 python -m alembic upgrade head
-
-# Create admin account (first time only)
 python scripts/create_admin.py
-
-# Start API server
 uvicorn app.main:app --reload --port 8000
 ```
 
-### 4. Frontend (Public Portfolio)
-
-```bash
+### 3 — Frontend
+```powershell
 cd frontend
 npm install
-npm run dev        # http://localhost:4321
+copy .env.example .env   # set PUBLIC_API_URL=http://localhost:8000
+npm run dev              # http://localhost:4321
 ```
 
-### 5. Admin Dashboard
-
-```bash
+### 4 — Admin
+```powershell
 cd admin
 npm install
-npm run dev        # http://localhost:4322
+copy .env.example .env   # set BACKEND_URL=http://localhost:8000
+npm run dev              # http://localhost:4322
 ```
 
-## 🔑 Admin Login
+## Production Deployment
 
-- URL: http://localhost:4322/admin/login  
-- Username: `admin`  
-- Password: `Admin@123456` (change via `create_admin.py --password`)
+All three apps deploy to **Vercel**. Database and file storage are hosted on **Supabase**.
 
-## 📋 Service URLs
+See each sub-project README for environment variables:
+- [`backend/README.md`](./backend/README.md)
+- [`frontend/README.md`](./frontend/README.md)
+- [`admin/README.md`](./admin/README.md)
 
-| Service | URL |
-|---------|-----|
-| Public Portfolio | http://localhost:4321 |
-| Admin Dashboard | http://localhost:4322/admin |
-| API + Swagger Docs | http://localhost:8000/docs |
-| Mailpit (Email UI) | http://localhost:8025 |
-| Umami Analytics | http://localhost:3001 |
+### Deploy order
+1. Create Supabase project → restore DB backup → run migrations
+2. Create Supabase Storage bucket `portfolio` (Public) → generate S3 keys
+3. Deploy `backend` on Vercel → set all env vars
+4. Deploy `frontend` on Vercel → set env vars
+5. Deploy `admin` on Vercel → set env vars
+6. Update `ALLOWED_ORIGINS` on backend with real Vercel URLs → redeploy
 
-## 🗃️ Database
+## Backup
 
-PostgreSQL runs on **port 5435** (port 5432 reserved for any existing local PostgreSQL installation).
-
-Connection string: `postgresql://portfolio_user:portfolio_pass@localhost:5435/portfolio_db`
-
-## 📁 Project Structure
-
+```powershell
+# Creates timestamped DB dump + uploads zip in backups/
+.\backup.ps1
 ```
-portfolio-platform/
-├── frontend/        ← Public portfolio (Astro SSG)
-├── admin/           ← Admin dashboard (Astro SSR)
-├── backend/         ← FastAPI REST API
-├── docs/            ← Architecture & API docs
-└── docker-compose.yml
-```
-
-## 🌐 Environment Variables
-
-Copy `backend/.env.example` to `backend/.env` before starting.  
-See `.env.example` in the root for all available options.
-
-## 🚢 Production Deployment
-
-When ready to go live, replace local services with:
-- PostgreSQL → **Neon** (managed)
-- File storage → **Cloudflare R2**
-- Email → **Resend**
-- Analytics → **Umami Cloud**
-- Frontend → **Cloudflare Pages**
-- Backend → **Railway / Render / Fly.io**
-
-Only `.env` values need to change — no code modifications required.
-
-## 📚 Documentation
-
-- [Architecture](docs/architecture.md)
-- [Database Schema](docs/database-schema.md)
-- [API Documentation](docs/api-documentation.md)
-- [Deployment Guide](docs/deployment.md)

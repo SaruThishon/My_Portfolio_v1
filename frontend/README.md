@@ -1,43 +1,75 @@
-# Astro Starter Kit: Minimal
+﻿# Frontend - Public Portfolio Site
 
-```sh
-npm create astro@latest -- --template minimal
+Server-side rendered Astro site. Every page request fetches live data from the backend API so content updates in the admin dashboard are instantly reflected without a rebuild.
+
+## Tech
+
+- **Astro 4** (SSR mode via `@astrojs/vercel` adapter)
+- **TypeScript**
+- Vanilla CSS (no framework)
+- Node.js 20+
+
+## Sections
+
+| Section | Description |
+|---------|-------------|
+| Hero | Name, animated typewriter title, profile photo, activity status, social links |
+| About | Bio / description from profile |
+| Projects | 3D ring carousel — fetches all projects from API |
+| Skills | Grouped by category |
+| Experience | Work history timeline |
+| Education | Education history |
+| Certifications | Certificates with images |
+| Contact | Contact form (submits to `/api/contact` SSR proxy) |
+
+## Key Features
+
+- **SSR** — all data fetched server-side on each request, no stale static builds
+- **3D ring carousel** for projects (CSS `preserve-3d`, `rotateY`)
+- **Typewriter effect** — cycles through comma-separated titles from profile
+- **Mobile sidebar buttons** — GitHub, LinkedIn, Email icon buttons on right edge
+- **Activity status** — shows Online / Last seen X ago from profile `is_online_public` flag
+- **Mobile-first responsive** layout
+- **Contact form** proxied through SSR route to avoid CORS
+
+## Local Development
+
+```powershell
+npm install
+
+# Copy and fill in .env
+copy .env.example .env
+
+npm run dev    # http://localhost:4321
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Requires the backend to be running at `PUBLIC_API_URL`.
 
-## 🚀 Project Structure
+## Environment Variables
 
-Inside of your Astro project, you'll see the following folders and files:
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `PUBLIC_API_URL` | ✔ | Backend API base URL (e.g. `http://localhost:8000`) |
+| `PUBLIC_SITE_URL` | | Canonical site URL (used in meta tags) |
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+## Pages
+
+```
+src/pages/
+├── index.astro          # Main single-page portfolio
+├── projects/
+│   ├── index.astro      # All projects listing
+│   └── [slug].astro     # Individual project detail
+└── api/
+    └── contact.ts       # SSR proxy — forwards contact form to backend
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Build and Deploy
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+```powershell
+npm run build      # Builds to dist/
+npm run preview    # Preview production build locally
+```
 
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Deployed on **Vercel** with root directory set to `frontend`.
+See `vercel.json` and `.env.production.example` for production config.
