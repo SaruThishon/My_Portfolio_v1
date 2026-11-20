@@ -57,7 +57,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // Inject build secret server-side for trigger-build endpoint
     if (path === '/api/admin/trigger-build') {
       (fetchOptions.headers as Record<string, string>)['x-build-secret'] =
-        (import.meta.env.BUILD_HOOK_SECRET as string) ?? 'dev_build_hook_secret';
+        process.env.BUILD_HOOK_SECRET ??
+        (import.meta.env.BUILD_HOOK_SECRET as string | undefined) ??
+        'dev_build_hook_secret';
     }
 
     const response = await fetch(`${BACKEND_URL}${path}`, fetchOptions);
@@ -73,8 +75,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[proxy] fetch to ${BACKEND_URL}${path} failed:`, msg);
     return new Response(
-      JSON.stringify({ detail: 'Proxy error — backend may be unavailable' }),
+      JSON.stringify({ detail: `Proxy error — ${msg}` }),
       { status: 502, headers: { 'Content-Type': 'application/json' } }
     );
   }

@@ -34,8 +34,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[upload-media] fetch to ${BACKEND_URL} failed:`, msg);
     return new Response(
-      JSON.stringify({ detail: 'Proxy error — backend may be unavailable' }),
+      JSON.stringify({ detail: `Proxy error — ${msg}` }),
       { status: 502, headers: { 'Content-Type': 'application/json' } }
     );
   }
