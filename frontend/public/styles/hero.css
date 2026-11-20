@@ -192,7 +192,7 @@
   }
   .hero__portrait-img{max-height:48vh}
   .hero__description{max-width:100%}
-  .hero__name-display{font-size:clamp(3rem,10vw,5rem)}
+  .hero__name-display{font-size:clamp(2.5rem,8vw,4rem)}
 }
 
 /* ── Mobile (≤600px): portrait top half, content below ─── */
@@ -213,18 +213,25 @@
     height:auto; /* let content grow naturally — no min-height clipping */
   }
 
-  /* Portrait: top ~45% of remaining viewport */
+  /* Portrait: compact centered column, fades bottom into bg */
   .hero__portrait-col{
     position:relative;
-    width:100%;
-    height:45vh;
-    min-height:200px;
-    max-width:100%;
-    margin-inline:0;
+    width:65%;
+    height:48vh;
+    min-height:260px;
+    max-width:260px;
+    margin-inline:auto;
     flex-shrink:0;
-    align-items:flex-start;
-    -webkit-mask-image:linear-gradient(to bottom,black 0%,black 55%,transparent 100%);
-    mask-image:linear-gradient(to bottom,black 0%,black 55%,transparent 100%);
+    align-items:center;
+    /* fade bottom, slight side fade */
+    -webkit-mask-image:
+      linear-gradient(to bottom,black 0%,black 60%,transparent 100%),
+      linear-gradient(to right,transparent 0%,black 8%,black 92%,transparent 100%);
+    mask-image:
+      linear-gradient(to bottom,black 0%,black 60%,transparent 100%),
+      linear-gradient(to right,transparent 0%,black 8%,black 92%,transparent 100%);
+    -webkit-mask-composite:destination-in;
+    mask-composite:intersect;
   }
   .hero__portrait-img-wrap{
     position:absolute;
@@ -255,6 +262,50 @@
   .hero__actions{gap:.625rem;margin-top:1.25rem}
   .btn{padding:.6em 1.1em;font-size:.875rem}
   .hero__meta{margin-top:.5rem}
-  .hero__social{margin-top:1rem;gap:.875rem}
+  .hero__social{display:none} /* replaced by sidebar on mobile */
   .hero__title-wrap{margin-top:.35rem}
+}
+
+/* ── Extra small (≤380px e.g. 320px phones) ───────────────────────────── */
+@media(max-width:380px){
+  .hero__portrait-col{height:42vh;min-height:200px;max-width:220px}
+  .hero__name-display{font-size:clamp(2rem,10vw,2.8rem)}
+  .hero__description{font-size:.875rem}
+  .btn{padding:.5em .9em;font-size:.8125rem}
+}
+
+/* ── Mobile social sidebar ───────────────────────────────────────────────── */
+/* Hidden on desktop — shown only on mobile as right-edge icon buttons */
+.hero__social-sidebar{display:none}
+
+@media(max-width:768px){
+  .hero__social-sidebar{
+    display:flex;
+    flex-direction:column;
+    gap:.625rem;
+    position:absolute;
+    right:0;
+    top:50%;
+    transform:translateY(-50%);
+    z-index:10;
+  }
+  .hero__sidebar-btn{
+    width:44px;
+    height:44px;
+    border-radius:12px 0 0 12px; /* flush to right edge, rounded on left */
+    background:rgba(183,148,246,.1);
+    border:1px solid rgba(183,148,246,.22);
+    border-right:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--color-accent-primary);
+    text-decoration:none;
+    transition:background .2s,transform .2s,border-color .2s;
+  }
+  .hero__sidebar-btn:hover{
+    background:rgba(183,148,246,.22);
+    border-color:rgba(183,148,246,.5);
+    transform:translateX(-4px);
+  }
 }
