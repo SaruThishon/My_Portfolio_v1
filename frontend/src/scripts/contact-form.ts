@@ -2,7 +2,7 @@ const form = document.getElementById('contact-form') as HTMLFormElement | null;
 if (form) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const API_URL = 'http://localhost:8000';
+    const API_URL = form.dataset.apiUrl || 'http://localhost:8000';
     const submitBtn = document.getElementById('cf-submit') as HTMLButtonElement;
     const submitText = document.getElementById('cf-submit-text')!;
     const submitLoading = document.getElementById('cf-submit-loading')!;

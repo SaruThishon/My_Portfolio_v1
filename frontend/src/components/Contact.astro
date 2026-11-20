@@ -31,7 +31,7 @@ const { email='', githubUrl='', linkedinUrl='' } = Astro.props;
         </div>
       </div>
       <div class="contact__right reveal" style="transition-delay:.1s">
-        <form class="contact-form" id="contact-form" novalidate>
+        <form class="contact-form" id="contact-form" novalidate data-api-url={import.meta.env.PUBLIC_API_URL || 'http://localhost:8000'}>
           <div class="form-row">
             <div class="form-group">
               <label for="cf-name" class="form-label">Name *</label>
