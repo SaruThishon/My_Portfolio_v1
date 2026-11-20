@@ -63,10 +63,13 @@
 @media (max-width: 768px) {
   .nav__links { display: none; }
   .nav__hamburger { display: flex; }
-  /* backdrop-filter on a fixed ancestor traps fixed children inside it,
-     causing .nav__mobile (position:fixed) to collapse to the nav height.
-     Remove it on mobile and use a fully opaque solid background instead. */
-  .nav,
+  /* At top of page: keep nav transparent so it blends with the hero. */
+  .nav { background: transparent; }
+
+  /* Scrolled state: solid background but NO backdrop-filter.
+     backdrop-filter on a fixed ancestor traps position:fixed children
+     inside its bounds — causing .nav__mobile to collapse to 72px.
+     Solid opaque background achieves the same visual without the trap. */
   .nav.is-scrolled {
     background: #111014;
     backdrop-filter: none;
