@@ -2,7 +2,7 @@ const form = document.getElementById('contact-form') as HTMLFormElement | null;
 if (form) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const API_URL = form.dataset.apiUrl || 'http://localhost:8000';
+    // Use the SSR proxy route — avoids CORS entirely (same-origin request).
     const submitBtn = document.getElementById('cf-submit') as HTMLButtonElement;
     const submitText = document.getElementById('cf-submit-text')!;
     const submitLoading = document.getElementById('cf-submit-loading')!;
@@ -22,7 +22,7 @@ if (form) {
     submitLoading.style.display = '';
 
     try {
-      const res = await fetch(`${API_URL}/api/enquiries/submit`, {
+      const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
